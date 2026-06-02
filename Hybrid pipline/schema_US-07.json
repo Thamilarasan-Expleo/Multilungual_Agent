@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-07",
+  "original_text": "As a Release Manager, I want an automated GitOps deployment pipeline using automated canary verification steps. Deployment Script: Der CI/CD-Workflow überwacht das Repository kontinuierlich auf neue Commits. Ein typischer Ablauf lautet: Merged branch 'feature/auth' changes into main deployment branch. Der Build schlug jedoch fehl due to missing configurations inside the application properties matrix. Die Pipeline bricht ab und sendet eine Benachrichtigung an das Entwicklungsteam: »Kritischer Fehler während der Container-Orchestrierung festgestellt.« Das System führt automatisch ein Rollback durch, um die Stabilität der Produktivumgebung zu gewährleisten.",
+  "translated_text_en": "As a Release Manager, I want an automated GitOps deployment pipeline using automated canary verification steps. [Translated to EN: Deployment Script: Der CI/CD-Workflow überwacht das Repository kontinuierlich auf neue Commits.] Ein typischer Ablauf lautet: Merged branch 'feature/auth' changes into main deployment branch. Der Build schlug jedoch fehl due to missing configurations inside the application properties matrix. [Translated to EN: Die Pipeline bricht ab und sendet eine Benachrichtigung an das Entwicklungsteam: »Kritischer Fehler während der Container-Orchestrierung festgestellt.«] [Translated to EN: Das System führt automatisch ein Rollback durch, um die Stabilität der Produktivumgebung zu gewährleisten.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Release Manager, I want an automated GitOps deployment pipeline using automated canary verification steps.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 111
+    },
+    {
+      "segment_id": 1,
+      "text": "Deployment Script: Der CI/CD-Workflow überwacht das Repository kontinuierlich auf neue Commits.",
+      "language": "de",
+      "start_char": 112,
+      "end_char": 207
+    },
+    {
+      "segment_id": 2,
+      "text": "Ein typischer Ablauf lautet: Merged branch 'feature/auth' changes into main deployment branch.",
+      "language": "en",
+      "start_char": 208,
+      "end_char": 302
+    },
+    {
+      "segment_id": 3,
+      "text": "Der Build schlug jedoch fehl due to missing configurations inside the application properties matrix.",
+      "language": "en",
+      "start_char": 303,
+      "end_char": 403
+    },
+    {
+      "segment_id": 4,
+      "text": "Die Pipeline bricht ab und sendet eine Benachrichtigung an das Entwicklungsteam: »Kritischer Fehler während der Container-Orchestrierung festgestellt.«",
+      "language": "de",
+      "start_char": 404,
+      "end_char": 555
+    },
+    {
+      "segment_id": 5,
+      "text": "Das System führt automatisch ein Rollback durch, um die Stabilität der Produktivumgebung zu gewährleisten.",
+      "language": "de",
+      "start_char": 556,
+      "end_char": 662
+    }
+  ]
+}

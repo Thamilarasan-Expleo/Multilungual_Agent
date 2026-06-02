@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-01",
+  "original_text": "As a Platform End-User, I want a secure enterprise multi-tenant logging infrastructure. Requirements: Das System muss ein ansprechendes, reaktionsschnelles Frontend-Interface bereitstellen. Wenn der Benutzer auf den 'Submit Button' klickt, muss eine verschluesselte Payload-Validierung gestartet werden. Das System prueft die Felder 'userId', 'tenantId' und 'sessionToken'. Falls die Authentifizierung fehlschlaegt, wird eine benutzerdefinierte Fehlermeldung ausgegeben: \"Der Authentifizierungsvorgang schlug aufgrund ungueltiger Anmeldedaten fehl.\" The interface must gracefully handle OAuth2 fallback paths automatically to prevent session termination blocks.",
+  "translated_text_en": "As a Platform End-User, I want a secure enterprise multi-tenant logging infrastructure. [Translated to EN: Requirements: Das System muss ein ansprechendes, reaktionsschnelles Frontend-Interface bereitstellen.] [Translated to EN: Wenn der Benutzer auf den 'Submit Button' klickt, muss eine verschluesselte Payload-Validierung gestartet werden.] [Translated to EN: Das System prueft die Felder 'userId', 'tenantId' und 'sessionToken'.] [Translated to EN: Falls die Authentifizierung fehlschlaegt, wird eine benutzerdefinierte Fehlermeldung ausgegeben: \"Der Authentifizierungsvorgang schlug aufgrund ungueltiger Anmeldedaten fehl.\"] [Translated to EN: The interface must gracefully handle OAuth2 fallback paths automatically to prevent session termination blocks.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Platform End-User, I want a secure enterprise multi-tenant logging infrastructure.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 87
+    },
+    {
+      "segment_id": 1,
+      "text": "Requirements: Das System muss ein ansprechendes, reaktionsschnelles Frontend-Interface bereitstellen.",
+      "language": "de",
+      "start_char": 88,
+      "end_char": 189
+    },
+    {
+      "segment_id": 2,
+      "text": "Wenn der Benutzer auf den 'Submit Button' klickt, muss eine verschluesselte Payload-Validierung gestartet werden.",
+      "language": "de",
+      "start_char": 190,
+      "end_char": 303
+    },
+    {
+      "segment_id": 3,
+      "text": "Das System prueft die Felder 'userId', 'tenantId' und 'sessionToken'.",
+      "language": "de",
+      "start_char": 304,
+      "end_char": 373
+    },
+    {
+      "segment_id": 4,
+      "text": "Falls die Authentifizierung fehlschlaegt, wird eine benutzerdefinierte Fehlermeldung ausgegeben: \"Der Authentifizierungsvorgang schlug aufgrund ungueltiger Anmeldedaten fehl.\"",
+      "language": "de",
+      "start_char": 374,
+      "end_char": 549
+    },
+    {
+      "segment_id": 5,
+      "text": "The interface must gracefully handle OAuth2 fallback paths automatically to prevent session termination blocks.",
+      "language": "de",
+      "start_char": 550,
+      "end_char": 661
+    }
+  ]
+}

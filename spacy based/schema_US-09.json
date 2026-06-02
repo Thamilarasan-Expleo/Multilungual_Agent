@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-09",
+  "original_text": "As an AI Architect, I want an intelligent Agentic RAG framework capable of orchestrating tools dynamically based on context. Agent Workflow: The autonomous agent continuously evaluates user input to determine intent. Unser Team nutzt spezialisierte Agentic RAG Frameworks fuer komplexe medizinische Abfragen. Wenn eine Anfrage eingeht, entscheidet der Agent ueber den naechsten Schritt. Ein typisches Szenario waere: Das macht Sinn, right? Falls zusaetzliche Fachdaten benoetigt werden, ruft der Agent eine externe Wissensdatenbank auf. Die Antwortsegmente werden aggregiert, syntaktisch ueberprueft und als strukturierte JSON-Payload an das User-Interface zurueckgegeben.",
+  "translated_text_en": "As an AI Architect, I want an intelligent Agentic RAG framework capable of orchestrating tools dynamically based on context. Agent Workflow: The autonomous agent continuously evaluates user input to determine intent. [Translated: Unser Team nutzt spezialisierte Agentic RAG Frameworks fuer komplexe medizinische Abfragen.] [Translated: Wenn eine Anfrage eingeht, entscheidet der Agent ueber den naechsten Schritt.] [Translated: Ein typisches Szenario waere: Das macht Sinn, right?] [Translated: Falls zusaetzliche Fachdaten benoetigt werden, ruft der Agent eine externe Wissensdatenbank auf.] [Translated: Die Antwortsegmente werden aggregiert, syntaktisch ueberprueft und als strukturierte JSON-Payload an das User-Interface zurueckgegeben.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As an AI Architect, I want an intelligent Agentic RAG framework capable of orchestrating tools dynamically based on context.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 124
+    },
+    {
+      "segment_id": 1,
+      "text": "Agent Workflow: The autonomous agent continuously evaluates user input to determine intent.",
+      "language": "en",
+      "start_char": 125,
+      "end_char": 216
+    },
+    {
+      "segment_id": 2,
+      "text": "Unser Team nutzt spezialisierte Agentic RAG Frameworks fuer komplexe medizinische Abfragen.",
+      "language": "de",
+      "start_char": 217,
+      "end_char": 308
+    },
+    {
+      "segment_id": 3,
+      "text": "Wenn eine Anfrage eingeht, entscheidet der Agent ueber den naechsten Schritt.",
+      "language": "de",
+      "start_char": 309,
+      "end_char": 386
+    },
+    {
+      "segment_id": 4,
+      "text": "Ein typisches Szenario waere: Das macht Sinn, right?",
+      "language": "de",
+      "start_char": 387,
+      "end_char": 439
+    },
+    {
+      "segment_id": 5,
+      "text": "Falls zusaetzliche Fachdaten benoetigt werden, ruft der Agent eine externe Wissensdatenbank auf.",
+      "language": "de",
+      "start_char": 440,
+      "end_char": 536
+    },
+    {
+      "segment_id": 6,
+      "text": "Die Antwortsegmente werden aggregiert, syntaktisch ueberprueft und als strukturierte JSON-Payload an das User-Interface zurueckgegeben.",
+      "language": "de",
+      "start_char": 537,
+      "end_char": 672
+    }
+  ]
+}

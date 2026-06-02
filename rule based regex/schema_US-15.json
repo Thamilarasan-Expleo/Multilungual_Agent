@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-15",
+  "original_text": "As an Online Store Front-End Engineer, I want a real-time shopping cart validation layer to manage pricing variations. Functional Steps: The checkout pipeline recalculates price adjustments dynamically. Das System validiert den aktuellen Warenkorb des Kunden waehrend des Bezahlvorgangs. Es prueft Produktverfuegbarkeiten: Alle ausgewaehlten Artikel muessen im Lagerbestand vorhanden sein, um Bestellverzoegerungen zu vermeiden. If a product is out of stock, the interface displays an alert: 'Item unavailable'. Der Kunde wird gebeten, die Artikelstueckzahl anzupassen oder ein alternatives Produkt auszuwaehlen.",
+  "translated_text_en": "[Translated to EN: As an Online Store Front-End Engineer, I want a real-time shopping cart validation layer to manage pricing variations.] Functional Steps: The checkout pipeline recalculates price adjustments dynamically. [Translated to EN: Das System validiert den aktuellen Warenkorb des Kunden waehrend des Bezahlvorgangs.] Es prueft Produktverfuegbarkeiten: Alle ausgewaehlten Artikel muessen im Lagerbestand vorhanden sein, um Bestellverzoegerungen zu vermeiden. If a product is out of stock, the interface displays an alert: 'Item unavailable'. [Translated to EN: Der Kunde wird gebeten, die Artikelstueckzahl anzupassen oder ein alternatives Produkt auszuwaehlen.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As an Online Store Front-End Engineer, I want a real-time shopping cart validation layer to manage pricing variations.",
+      "language": "de",
+      "start_char": 0,
+      "end_char": 118
+    },
+    {
+      "segment_id": 1,
+      "text": "Functional Steps: The checkout pipeline recalculates price adjustments dynamically.",
+      "language": "en",
+      "start_char": 119,
+      "end_char": 202
+    },
+    {
+      "segment_id": 2,
+      "text": "Das System validiert den aktuellen Warenkorb des Kunden waehrend des Bezahlvorgangs.",
+      "language": "de",
+      "start_char": 203,
+      "end_char": 287
+    },
+    {
+      "segment_id": 3,
+      "text": "Es prueft Produktverfuegbarkeiten: Alle ausgewaehlten Artikel muessen im Lagerbestand vorhanden sein, um Bestellverzoegerungen zu vermeiden.",
+      "language": "en",
+      "start_char": 288,
+      "end_char": 428
+    },
+    {
+      "segment_id": 4,
+      "text": "If a product is out of stock, the interface displays an alert: 'Item unavailable'.",
+      "language": "en",
+      "start_char": 429,
+      "end_char": 511
+    },
+    {
+      "segment_id": 5,
+      "text": "Der Kunde wird gebeten, die Artikelstueckzahl anzupassen oder ein alternatives Produkt auszuwaehlen.",
+      "language": "de",
+      "start_char": 512,
+      "end_char": 612
+    }
+  ]
+}

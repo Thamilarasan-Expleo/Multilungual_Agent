@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-11",
+  "original_text": "As a Database Administrator, I want automated execution profiling for slow-running analytical queries. DBA Strategy: The optimization engine runs queries through an explain-plan analysis layer. Refactored module 401: Fehlerbehebung im Core routing component durchgefuehrt, um Index-Scans zu optimieren. The processing latency dropped down dramatically from 45ms to 2ms after applying the missing database constraints. Das System ueberwacht nun kontinuierlich die Abfrage-Performance. Falls die Latenz erneut den definierten Schwellenwert ueberschreitet, wird automatisch ein administratives Ticket im Jira-System erstellt.",
+  "translated_text_en": "As a Database Administrator, I want automated execution profiling for slow-running analytical queries. DBA Strategy: The optimization engine runs queries through an explain-plan analysis layer. Refactored module 401: [Translated: Fehlerbehebung im Core routing component durchgefuehrt, um Index-Scans zu optimieren.] The processing latency dropped down dramatically from 45ms to 2ms after applying the missing database constraints. [Translated: Das System ueberwacht nun kontinuierlich die Abfrage-Performance.] [Translated: Falls die Latenz erneut den definierten Schwellenwert ueberschreitet, wird automatisch ein administratives Ticket] [Translated: im Jira-System erstellt.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Database Administrator, I want automated execution profiling for slow-running analytical queries.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 102
+    },
+    {
+      "segment_id": 1,
+      "text": "DBA Strategy:",
+      "language": "en",
+      "start_char": 103,
+      "end_char": 116
+    },
+    {
+      "segment_id": 2,
+      "text": "The optimization engine runs queries through an explain-plan analysis layer.",
+      "language": "en",
+      "start_char": 117,
+      "end_char": 193
+    },
+    {
+      "segment_id": 3,
+      "text": "Refactored module 401:",
+      "language": "en",
+      "start_char": 194,
+      "end_char": 216
+    },
+    {
+      "segment_id": 4,
+      "text": "Fehlerbehebung im Core routing component durchgefuehrt, um Index-Scans zu optimieren.",
+      "language": "de",
+      "start_char": 217,
+      "end_char": 302
+    },
+    {
+      "segment_id": 5,
+      "text": "The processing latency dropped down dramatically from 45ms to 2ms after applying the missing database constraints.",
+      "language": "en",
+      "start_char": 303,
+      "end_char": 417
+    },
+    {
+      "segment_id": 6,
+      "text": "Das System ueberwacht nun kontinuierlich die Abfrage-Performance.",
+      "language": "de",
+      "start_char": 418,
+      "end_char": 483
+    },
+    {
+      "segment_id": 7,
+      "text": "Falls die Latenz erneut den definierten Schwellenwert ueberschreitet, wird automatisch ein administratives Ticket",
+      "language": "de",
+      "start_char": 484,
+      "end_char": 597
+    },
+    {
+      "segment_id": 8,
+      "text": "im Jira-System erstellt.",
+      "language": "de",
+      "start_char": 598,
+      "end_char": 622
+    }
+  ]
+}

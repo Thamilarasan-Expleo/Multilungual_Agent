@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-13",
+  "original_text": "As a Cybersecurity Engineer, I want an automated threat detection mechanism to monitor incoming network packets. Security Policy: The boundary firewall inspects traffic payload patterns in real time. Das System blockiert verdaechtige IP-Adressen automatisch beim Erkennen von Anomalien. Ein Vorfall wird wie folgt protokolliert: \"Kritischer Sicherheitsalarm: Ein potenzieller Brute-Force-Angriff wurde im Systemnetzwerk identifiziert.\" The monitoring agent immediately dispatches encrypted alert payloads to the security operations center via secure webhooks to trigger immediate mitigation protocols.",
+  "translated_text_en": "As a Cybersecurity Engineer, I want an automated threat detection mechanism to monitor incoming network packets. Security Policy: The boundary firewall inspects traffic payload patterns in real time. [Translated: Das System blockiert verdaechtige IP-Adressen automatisch beim Erkennen von Anomalien.] [Translated: Ein Vorfall wird wie folgt protokolliert: \"Kritischer Sicherheitsalarm: Ein potenzieller Brute-Force-Angriff wurde] [Translated: im Systemnetzwerk identifiziert.\"] The monitoring agent immediately dispatches encrypted alert payloads to the security operations center via secure webhooks to trigger immediate mitigation protocols.",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Cybersecurity Engineer, I want an automated threat detection mechanism to monitor incoming network packets.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 112
+    },
+    {
+      "segment_id": 1,
+      "text": "Security Policy: The boundary firewall inspects traffic payload patterns in real time.",
+      "language": "en",
+      "start_char": 113,
+      "end_char": 199
+    },
+    {
+      "segment_id": 2,
+      "text": "Das System blockiert verdaechtige IP-Adressen automatisch beim Erkennen von Anomalien.",
+      "language": "de",
+      "start_char": 200,
+      "end_char": 286
+    },
+    {
+      "segment_id": 3,
+      "text": "Ein Vorfall wird wie folgt protokolliert: \"Kritischer Sicherheitsalarm: Ein potenzieller Brute-Force-Angriff wurde",
+      "language": "de",
+      "start_char": 287,
+      "end_char": 401
+    },
+    {
+      "segment_id": 4,
+      "text": "im Systemnetzwerk identifiziert.\"",
+      "language": "de",
+      "start_char": 402,
+      "end_char": 435
+    },
+    {
+      "segment_id": 5,
+      "text": "The monitoring agent immediately dispatches encrypted alert payloads to the security operations center via secure webhooks to trigger immediate mitigation protocols.",
+      "language": "en",
+      "start_char": 436,
+      "end_char": 601
+    }
+  ]
+}

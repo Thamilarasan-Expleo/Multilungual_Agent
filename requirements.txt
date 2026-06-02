@@ -1,0 +1,6 @@
+spacy
+langdetect
+pytest
+click
+typer
+fasttext-wheel

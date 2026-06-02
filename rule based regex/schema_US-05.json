@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-05",
+  "original_text": "As a DevOps Infrastructure Engineer, I want an asynchronous event-driven system architecture to handle real-time logging telemetry. System Blueprint: Der Cloud-Infrastruktur-Bus empfaengt kontinuierlich Telemetriedaten von verteilten Microservices. Der aktuelle Systemstatus lautet standardmaessig 'System Online'. Falls kritische Fehler auftreten, initialisiert das System sofort die Komponente 'Core Routing Component'. Jede Nachricht enthaelt Statuswerte wie 'Authenticated' oder 'Pending'. Die automatische Skalierungsrichtlinie startet daraufhin zusaetzliche Worker-Instanzen: Initialisiere Core. Authenticated. Starten. Der gesamte Vorgang wird im globalen Cluster-Dashboard protokolliert, um Engpaesse zu vermeiden.",
+  "translated_text_en": "As a DevOps Infrastructure Engineer, I want an asynchronous event-driven system architecture to handle real-time logging telemetry. [Translated to EN: System Blueprint: Der Cloud-Infrastruktur-Bus empfaengt kontinuierlich Telemetriedaten von verteilten Microservices.] [Translated to EN: Der aktuelle Systemstatus lautet standardmaessig 'System Online'.] [Translated to EN: Falls kritische Fehler auftreten, initialisiert das System sofort die Komponente 'Core Routing Component'.] Jede Nachricht enthaelt Statuswerte wie 'Authenticated' oder 'Pending'. [Translated to EN: Die automatische Skalierungsrichtlinie startet daraufhin zusaetzliche Worker-Instanzen: Initialisiere Core.] Authenticated. Starten. [Translated to EN: Der gesamte Vorgang wird im globalen Cluster-Dashboard protokolliert, um Engpaesse zu vermeiden.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a DevOps Infrastructure Engineer, I want an asynchronous event-driven system architecture to handle real-time logging telemetry.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 131
+    },
+    {
+      "segment_id": 1,
+      "text": "System Blueprint: Der Cloud-Infrastruktur-Bus empfaengt kontinuierlich Telemetriedaten von verteilten Microservices.",
+      "language": "de",
+      "start_char": 132,
+      "end_char": 248
+    },
+    {
+      "segment_id": 2,
+      "text": "Der aktuelle Systemstatus lautet standardmaessig 'System Online'.",
+      "language": "de",
+      "start_char": 249,
+      "end_char": 314
+    },
+    {
+      "segment_id": 3,
+      "text": "Falls kritische Fehler auftreten, initialisiert das System sofort die Komponente 'Core Routing Component'.",
+      "language": "de",
+      "start_char": 315,
+      "end_char": 421
+    },
+    {
+      "segment_id": 4,
+      "text": "Jede Nachricht enthaelt Statuswerte wie 'Authenticated' oder 'Pending'.",
+      "language": "en",
+      "start_char": 422,
+      "end_char": 493
+    },
+    {
+      "segment_id": 5,
+      "text": "Die automatische Skalierungsrichtlinie startet daraufhin zusaetzliche Worker-Instanzen: Initialisiere Core.",
+      "language": "de",
+      "start_char": 494,
+      "end_char": 601
+    },
+    {
+      "segment_id": 6,
+      "text": "Authenticated.",
+      "language": "en",
+      "start_char": 602,
+      "end_char": 616
+    },
+    {
+      "segment_id": 7,
+      "text": "Starten.",
+      "language": "en",
+      "start_char": 617,
+      "end_char": 625
+    },
+    {
+      "segment_id": 8,
+      "text": "Der gesamte Vorgang wird im globalen Cluster-Dashboard protokolliert, um Engpaesse zu vermeiden.",
+      "language": "de",
+      "start_char": 626,
+      "end_char": 722
+    }
+  ]
+}

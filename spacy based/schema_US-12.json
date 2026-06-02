@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-12",
+  "original_text": "As a Clinical Research Data Analyst, I want a medical chatbot system capable of evaluating unstructured clinical summaries. Chatbot Requirement: The clinical intelligence module parses health documents securely. Das System fungiert als intelligenter medizinischer Abfrage-Chatbot namens 'MI Bot', der auf dem LangGraph-Framework basiert. Es analysiert komplexe Patientenakten und extrahiert Diagnosen. Kriterien werden hiermit validiert: Alle extrahierten medizinischen Fachbegriffe muessen mit standardisierten Katalogen abgeglichen werden. Die Ergebnisse werden strukturiert aufbereitet und dem behandelnden Arzt im Dashboard zur finalen Verifizierung angezeigt.",
+  "translated_text_en": "As a Clinical Research Data Analyst, I want a medical chatbot system capable of evaluating unstructured clinical summaries. Chatbot Requirement: The clinical intelligence module parses health documents securely. [Translated: Das System fungiert als intelligenter medizinischer Abfrage-Chatbot namens 'MI Bot', der auf dem LangGraph-Framework basiert.] [Translated: Es analysiert komplexe Patientenakten und extrahiert Diagnosen.] [Translated: Kriterien werden hiermit validiert: Alle extrahierten medizinischen Fachbegriffe muessen mit standardisierten Katalogen abgeglichen werden.] [Translated: Die Ergebnisse werden strukturiert aufbereitet und dem behandelnden Arzt] [Translated: im Dashboard zur finalen Verifizierung angezeigt.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Clinical Research Data Analyst, I want a medical chatbot system capable of evaluating unstructured clinical summaries.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 123
+    },
+    {
+      "segment_id": 1,
+      "text": "Chatbot Requirement: The clinical intelligence module parses health documents securely.",
+      "language": "en",
+      "start_char": 124,
+      "end_char": 211
+    },
+    {
+      "segment_id": 2,
+      "text": "Das System fungiert als intelligenter medizinischer Abfrage-Chatbot namens 'MI Bot', der auf dem LangGraph-Framework basiert.",
+      "language": "de",
+      "start_char": 212,
+      "end_char": 337
+    },
+    {
+      "segment_id": 3,
+      "text": "Es analysiert komplexe Patientenakten und extrahiert Diagnosen.",
+      "language": "de",
+      "start_char": 338,
+      "end_char": 401
+    },
+    {
+      "segment_id": 4,
+      "text": "Kriterien werden hiermit validiert: Alle extrahierten medizinischen Fachbegriffe muessen mit standardisierten Katalogen abgeglichen werden.",
+      "language": "de",
+      "start_char": 402,
+      "end_char": 541
+    },
+    {
+      "segment_id": 5,
+      "text": "Die Ergebnisse werden strukturiert aufbereitet und dem behandelnden Arzt",
+      "language": "de",
+      "start_char": 542,
+      "end_char": 614
+    },
+    {
+      "segment_id": 6,
+      "text": "im Dashboard zur finalen Verifizierung angezeigt.",
+      "language": "de",
+      "start_char": 615,
+      "end_char": 664
+    }
+  ]
+}

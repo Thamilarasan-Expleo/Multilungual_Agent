@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-03",
+  "original_text": "As a Senior Data Engineer, I want a high-performance vector ingestion pipeline for unstructured document parsing. Pipeline Logic: Die ETL-Pipeline muss Dokumente im PDF- und XML-Format automatisiert einlesen. Waerend der Vorverarbeitung (Pre-processing Phase) extrahiert das System den Text und fuehrt eine Segmentierung durch. Ein integrierter BM25-Ranking-Algorithmus bewertet die Relevanz der extrahierten Textpassagen. Falls ein Segment gemischten Text enthaelt, muss das System das Flag 'lang' auf 'de' setzen, damit die nachgelagerte Uebersetzungsschicht (Translation Layer) den Text fehlerfrei in ein englisches Einbettungsmodell ueberfuehren kann. This prevents embedding distortion and indexing drops.",
+  "translated_text_en": "As a Senior Data Engineer, I want a high-performance vector ingestion pipeline for unstructured document parsing. [Translated: Pipeline Logic: Die ETL-Pipeline muss Dokumente im PDF- und XML-Format automatisiert einlesen.] [Translated: Waerend der Vorverarbeitung (Pre-processing Phase) extrahiert das System den Text und fuehrt eine Segmentierung durch.] [Translated: Ein integrierter BM25-Ranking-Algorithmus bewertet die Relevanz der extrahierten Textpassagen.] [Translated: Falls ein Segment gemischten Text enthaelt, muss das System das Flag 'lang' auf 'de' setzen, damit die nachgelagerte Uebersetzungsschicht (Translation Layer) den Text fehlerfrei in ein englisches Einbettungsmodell ueberfuehren kann.] This prevents embedding distortion and indexing drops.",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Senior Data Engineer, I want a high-performance vector ingestion pipeline for unstructured document parsing.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 113
+    },
+    {
+      "segment_id": 1,
+      "text": "Pipeline Logic: Die ETL-Pipeline muss Dokumente im PDF- und XML-Format automatisiert einlesen.",
+      "language": "de",
+      "start_char": 114,
+      "end_char": 208
+    },
+    {
+      "segment_id": 2,
+      "text": "Waerend der Vorverarbeitung (Pre-processing Phase) extrahiert das System den Text und fuehrt eine Segmentierung durch.",
+      "language": "de",
+      "start_char": 209,
+      "end_char": 327
+    },
+    {
+      "segment_id": 3,
+      "text": "Ein integrierter BM25-Ranking-Algorithmus bewertet die Relevanz der extrahierten Textpassagen.",
+      "language": "de",
+      "start_char": 328,
+      "end_char": 422
+    },
+    {
+      "segment_id": 4,
+      "text": "Falls ein Segment gemischten Text enthaelt, muss das System das Flag 'lang' auf 'de' setzen, damit die nachgelagerte Uebersetzungsschicht (Translation Layer) den Text fehlerfrei in ein englisches Einbettungsmodell ueberfuehren kann.",
+      "language": "de",
+      "start_char": 423,
+      "end_char": 655
+    },
+    {
+      "segment_id": 5,
+      "text": "This prevents embedding distortion and indexing drops.",
+      "language": "en",
+      "start_char": 656,
+      "end_char": 710
+    }
+  ]
+}

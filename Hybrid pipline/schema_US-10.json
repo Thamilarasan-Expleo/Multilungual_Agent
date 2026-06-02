@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-10",
+  "original_text": "As a Front-End UX Developer, I want a localized metrics dashboard layout to visualize system load anomalies. UI Specifications: Das Dashboard muss Echtzeit-Diagramme für CPU- und Speicherauslastung anzeigen. Klicken Sie auf 'Submit Button', um das Formular direkt abzusenden und die Filterparameter zu übernehmen. This action will automatically refresh your dashboard view and clear cached telemetry profiles. Falls der Web-Socket-Stream unterbricht, versucht die Client-Anwendung eine automatische Wiederverbindung. Der Ladeindikator zeigt währenddessen den aktuellen Verbindungsstatus an, um eine optimale Benutzererfahrung zu gewährleisten.",
+  "translated_text_en": "As a Front-End UX Developer, I want a localized metrics dashboard layout to visualize system load anomalies. [Translated to EN: UI Specifications: Das Dashboard muss Echtzeit-Diagramme für CPU- und Speicherauslastung anzeigen.] [Translated to EN: Klicken Sie auf 'Submit Button', um das Formular direkt abzusenden und die Filterparameter zu übernehmen.] This action will automatically refresh your dashboard view and clear cached telemetry profiles. [Translated to EN: Falls der Web-Socket-Stream unterbricht, versucht die Client-Anwendung eine automatische Wiederverbindung.] [Translated to EN: Der Ladeindikator zeigt währenddessen den aktuellen Verbindungsstatus an, um eine optimale Benutzererfahrung zu gewährleisten.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Front-End UX Developer, I want a localized metrics dashboard layout to visualize system load anomalies.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 108
+    },
+    {
+      "segment_id": 1,
+      "text": "UI Specifications: Das Dashboard muss Echtzeit-Diagramme für CPU- und Speicherauslastung anzeigen.",
+      "language": "de",
+      "start_char": 109,
+      "end_char": 207
+    },
+    {
+      "segment_id": 2,
+      "text": "Klicken Sie auf 'Submit Button', um das Formular direkt abzusenden und die Filterparameter zu übernehmen.",
+      "language": "de",
+      "start_char": 208,
+      "end_char": 313
+    },
+    {
+      "segment_id": 3,
+      "text": "This action will automatically refresh your dashboard view and clear cached telemetry profiles.",
+      "language": "en",
+      "start_char": 314,
+      "end_char": 409
+    },
+    {
+      "segment_id": 4,
+      "text": "Falls der Web-Socket-Stream unterbricht, versucht die Client-Anwendung eine automatische Wiederverbindung.",
+      "language": "de",
+      "start_char": 410,
+      "end_char": 516
+    },
+    {
+      "segment_id": 5,
+      "text": "Der Ladeindikator zeigt währenddessen den aktuellen Verbindungsstatus an, um eine optimale Benutzererfahrung zu gewährleisten.",
+      "language": "de",
+      "start_char": 517,
+      "end_char": 643
+    }
+  ]
+}

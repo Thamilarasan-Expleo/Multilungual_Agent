@@ -1,0 +1,224 @@
+Project Name: Global Enterprise Customer Management Platform
+
+Project Overview
+
+The Global Enterprise Customer Management Platform (GECMP) is designed to provide a centralized solution for managing customer information across multiple regions, business units, and regulatory jurisdictions. The platform supports both German-speaking and English-speaking users and enables seamless integration with existing enterprise systems.
+
+Die Anwendung wird von Vertriebsteams, Kundendienstmitarbeitern, Compliance-Beauftragten und Systemadministratoren verwendet. Users can access the platform through a secure web portal and perform activities such as customer onboarding, profile maintenance, contract management, and audit reporting.
+
+The solution must maintain high availability and process requests with minimal latency. Darüber hinaus muss das System in der Lage sein, mehrere Millionen Datensätze ohne Leistungseinbußen zu verarbeiten.
+
+Business Context
+
+The organization currently operates several disconnected systems that store customer information independently. Dies führt häufig zu Dateninkonsistenzen, redundanten Datensätzen und erhöhtem Verwaltungsaufwand. The new platform aims to establish a single source of truth for customer-related information.
+
+Several departments have expressed concerns regarding data synchronization, reporting delays, and regulatory compliance. Das Projektteam hat daher beschlossen, eine moderne serviceorientierte Architektur einzuführen, um Skalierbarkeit und Wartbarkeit sicherzustellen.
+
+User Story US-001
+
+As a Customer Service Representative, I want to search for customers using multiple search criteria so that I can quickly locate customer records.
+
+Der Benutzer soll Kunden anhand von Kundennummer, Vorname, Nachname, Telefonnummer und E-Mail-Adresse suchen können.
+
+Acceptance Criteria
+
+- The field "CustomerId" shall be searchable.
+- Das Feld "Nachname" muss unterstützt werden.
+- Search results shall appear within three seconds.
+- Die Trefferliste muss paginiert dargestellt werden.
+- The system shall support fuzzy search functionality.
+
+User Story US-002
+
+As a Compliance Officer, I want to review customer consent records so that I can verify regulatory compliance.
+
+Der Compliance-Beauftragte muss alle Einwilligungen einschließlich Zeitstempel und Herkunftssystem anzeigen können. The system shall preserve historical consent information for audit purposes.
+
+Acceptance Criteria
+
+- Consent history shall not be editable.
+- Änderungen müssen revisionssicher gespeichert werden.
+- Audit reports shall be exportable to PDF and Excel formats.
+- Das System muss sämtliche Zugriffe protokollieren.
+
+Technical Architecture
+
+The application follows a microservice-based architecture consisting of multiple independently deployable services. Jeder Service besitzt eine klar definierte Verantwortung und kommuniziert über REST-Schnittstellen.
+
+The API Gateway acts as the primary entry point for all client requests. Die Authentifizierung erfolgt über OAuth 2.0 und OpenID Connect.
+
+Core Services
+
+1. Customer Service
+2. Contract Service
+3. Notification Service
+4. Audit Service
+5. Reporting Service
+
+Jeder Dienst speichert seine Daten in einer eigenen Datenbank, um eine lose Kopplung zu gewährleisten. Event-driven communication is implemented using Apache Kafka.
+
+Database Requirements
+
+The customer database shall store personal information, contact details, consent records, and relationship mappings.
+
+Die Datenbank muss folgende Felder unterstützen:
+
+- Kundennummer
+- Vorname
+- Nachname
+- Geburtsdatum
+- E-Mail-Adresse
+- Telefonnummer
+- Einwilligungsstatus
+
+The following fields shall be mandatory:
+
+- CustomerId
+- FirstName
+- LastName
+- EmailAddress
+
+Database constraints must prevent duplicate customer identifiers. Darüber hinaus müssen Fremdschlüsselbeziehungen konsistent gehalten werden.
+
+API Requirements
+
+Endpoint:
+
+POST /api/customer/create
+
+Die API muss fehlerhafte Anfragen mit einem HTTP-Statuscode 400 beantworten. Validation errors shall contain a detailed explanation.
+
+User Interface Requirements
+
+The application shall provide a responsive user interface that supports desktop and tablet devices.
+
+Die Benutzeroberfläche muss die folgenden Registerkarten enthalten:
+
+- Dashboard
+- Kunden
+- Verträge
+- Berichte
+- Einstellungen
+
+The dashboard shall display key performance indicators and operational metrics. Der Benutzer kann die Sprache zwischen Deutsch und Englisch wechseln.
+
+Field Labels
+
+Customer Name
+Customer Number
+Account Status
+Approval Status
+Contract Start Date
+Contract End Date
+
+Deutsche Bezeichnungen:
+
+Kundenname
+Kundennummer
+Kontostatus
+Genehmigungsstatus
+Vertragsbeginn
+Vertragsende
+
+Error Handling
+
+The system shall gracefully handle unexpected failures.
+
+Typische Fehlermeldungen:
+
+Fehler 401: Nicht autorisiert.
+Fehler 403: Zugriff verweigert.
+Fehler 404: Datensatz nicht gefunden.
+Fehler 500: Interner Serverfehler.
+
+English equivalents:
+
+Error 401: Unauthorized.
+Error 403: Access denied.
+Error 404: Record not found.
+Error 500: Internal server error.
+
+Logging Requirements
+
+All critical business operations shall be logged.
+
+Example Log Entries
+
+2026-03-01 08:00:15 INFO User login successful.
+2026-03-01 08:00:18 INFO Benutzer erfolgreich angemeldet.
+2026-03-01 08:02:30 WARN Password expires in 5 days.
+2026-03-01 08:02:35 WARN Kennwort läuft in 5 Tagen ab.
+2026-03-01 08:03:20 ERROR Failed to connect to database.
+2026-03-01 08:03:21 ERROR Datenbankverbindung fehlgeschlagen.
+
+Compliance Requirements
+
+Gemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.
+
+The organization shall implement appropriate technical and organizational measures to protect personal information.
+
+Alle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten. Violations shall be reported immediately to the Data Protection Officer.
+
+Legal Statement
+
+Gemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.
+
+The Contractor shall not disclose confidential information to any third party without prior written consent.
+
+Support Ticket Example
+
+Ticket Number: INC-1001
+
+User Report:
+"I am unable to access the customer profile page."
+
+Support Response:
+"The issue is currently under investigation."
+
+Benutzermeldung:
+"Ich kann die Kundendetailseite nicht öffnen."
+
+Support-Antwort:
+"Das Problem wird derzeit untersucht."
+
+Email Example
+
+Subject: Customer Data Migration Status
+
+Dear Team,
+
+The migration process has completed successfully. All customer records have been validated and imported into the target environment.
+
+Mit freundlichen Grüßen,
+Projektleitung
+
+Conversation Example
+
+Agent: Can you provide the CustomerId?
+Customer: Yes, it is C12345.
+Agent: Thank you.
+
+Mitarbeiter: Können Sie die Kundennummer bestätigen?
+Kunde: Ja, die Nummer lautet C12345.
+Mitarbeiter: Vielen Dank.
+
+Short Segments
+
+Ja.
+Nein.
+Okay.
+Done.
+Retry.
+Abbrechen.
+Weiter.
+Speichern.
+Cancel.
+Submit.
+
+Complex Sentence Example
+
+Obwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Prüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications are still synchronizing customer information across regional environments.
+
+Mixed Technical Statement
+
+Die CustomerProfileSynchronizationEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die CustomerRelationshipManagementDatabase, while the AuditComplianceMonitoringService records every transaction for regulatory reporting purposes.

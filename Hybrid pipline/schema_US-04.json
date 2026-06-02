@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-04",
+  "original_text": "As a Third-Party API Developer, I want a rate-limited RESTful API Gateway endpoint to query transaction data. Route Definition: Dieser hocheffiziente Endpunkt führt ein tiefes semantisches Parsing für jede Anfrage durch. Es akzeptiert optionale Payload-Parameter wie 'max_length', 'temperature' oder 'top_p' Werte. Die Geschäftslogik verarbeitet die Anfragen sequenziell: Gemäß Absatz 3 der internen API-Sicherheitsrichtlinie muss jede eingehende 'request_id' verifiziert werden. Wenn die Validierung fehlschlägt, wirft die Anwendungsschicht sofort einen '500 Internal Server Error' (Fehler beim Verbindungsaufbau) aus. The gateway must guarantee sub-50ms roundtrip responses under high concurrency.",
+  "translated_text_en": "As a Third-Party API Developer, I want a rate-limited RESTful API Gateway endpoint to query transaction data. [Translated to EN: Route Definition: Dieser hocheffiziente Endpunkt führt ein tiefes semantisches Parsing für jede Anfrage durch.] [Translated to EN: Es akzeptiert optionale Payload-Parameter wie 'max_length', 'temperature' oder 'top_p' Werte.] [Translated to EN: Die Geschäftslogik verarbeitet die Anfragen sequenziell: Gemäß Absatz 3 der internen API-Sicherheitsrichtlinie muss jede eingehende 'request_id' verifiziert werden.] [Translated to EN: Wenn die Validierung fehlschlägt, wirft die Anwendungsschicht sofort einen '500 Internal Server Error' (Fehler beim Verbindungsaufbau) aus.] The gateway must guarantee sub-50ms roundtrip responses under high concurrency.",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Third-Party API Developer, I want a rate-limited RESTful API Gateway endpoint to query transaction data.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 109
+    },
+    {
+      "segment_id": 1,
+      "text": "Route Definition: Dieser hocheffiziente Endpunkt führt ein tiefes semantisches Parsing für jede Anfrage durch.",
+      "language": "de",
+      "start_char": 110,
+      "end_char": 220
+    },
+    {
+      "segment_id": 2,
+      "text": "Es akzeptiert optionale Payload-Parameter wie 'max_length', 'temperature' oder 'top_p' Werte.",
+      "language": "de",
+      "start_char": 221,
+      "end_char": 314
+    },
+    {
+      "segment_id": 3,
+      "text": "Die Geschäftslogik verarbeitet die Anfragen sequenziell: Gemäß Absatz 3 der internen API-Sicherheitsrichtlinie muss jede eingehende 'request_id' verifiziert werden.",
+      "language": "de",
+      "start_char": 315,
+      "end_char": 479
+    },
+    {
+      "segment_id": 4,
+      "text": "Wenn die Validierung fehlschlägt, wirft die Anwendungsschicht sofort einen '500 Internal Server Error' (Fehler beim Verbindungsaufbau) aus.",
+      "language": "de",
+      "start_char": 480,
+      "end_char": 619
+    },
+    {
+      "segment_id": 5,
+      "text": "The gateway must guarantee sub-50ms roundtrip responses under high concurrency.",
+      "language": "en",
+      "start_char": 620,
+      "end_char": 699
+    }
+  ]
+}

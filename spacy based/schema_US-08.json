@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-08",
+  "original_text": "As an Enterprise Accounting Application, I want a secure financial ledger mechanism to process international invoicing requests. Transaction Flow: The billing module processes corporate accounts globally. Nach der erfolgreichen Validierung wird die Abrechnung ausgefuehrt: Der Gesamtbetrag inklusive MwSt. wurde erfolgreich abgebucht via authorized payment gateways. Das System generiert daraufhin ein PDF-Invoicing-Dokument fuer den Endkunden. Alle steuerrelevanten Datenpunkte werden in der relationalen PostgreSQL-Datenbank verschluesselt gespeichert, um die lueckenlose Konformitaet mit internationalen Rechnungslegungsvorschriften zu sichern.",
+  "translated_text_en": "As an Enterprise Accounting Application, I want a secure financial ledger mechanism to process international invoicing requests. Transaction Flow: The billing module processes corporate accounts globally. [Translated: Nach der erfolgreichen Validierung wird die Abrechnung ausgefuehrt: Der Gesamtbetrag inklusive MwSt.] [Translated: wurde erfolgreich abgebucht via authorized payment gateways.] [Translated: Das System generiert daraufhin ein PDF-Invoicing-Dokument fuer den Endkunden.] [Translated: Alle steuerrelevanten Datenpunkte werden in der relationalen PostgreSQL-Datenbank verschluesselt gespeichert, um die lueckenlose Konformitaet mit internationalen Rechnungslegungsvorschriften zu sichern.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As an Enterprise Accounting Application, I want a secure financial ledger mechanism to process international invoicing requests.",
+      "language": "en",
+      "start_char": 0,
+      "end_char": 128
+    },
+    {
+      "segment_id": 1,
+      "text": "Transaction Flow: The billing module processes corporate accounts globally.",
+      "language": "en",
+      "start_char": 129,
+      "end_char": 204
+    },
+    {
+      "segment_id": 2,
+      "text": "Nach der erfolgreichen Validierung wird die Abrechnung ausgefuehrt: Der Gesamtbetrag inklusive MwSt.",
+      "language": "de",
+      "start_char": 205,
+      "end_char": 305
+    },
+    {
+      "segment_id": 3,
+      "text": "wurde erfolgreich abgebucht via authorized payment gateways.",
+      "language": "de",
+      "start_char": 306,
+      "end_char": 366
+    },
+    {
+      "segment_id": 4,
+      "text": "Das System generiert daraufhin ein PDF-Invoicing-Dokument fuer den Endkunden.",
+      "language": "de",
+      "start_char": 367,
+      "end_char": 444
+    },
+    {
+      "segment_id": 5,
+      "text": "Alle steuerrelevanten Datenpunkte werden in der relationalen PostgreSQL-Datenbank verschluesselt gespeichert, um die lueckenlose Konformitaet mit internationalen Rechnungslegungsvorschriften zu sichern.",
+      "language": "de",
+      "start_char": 445,
+      "end_char": 647
+    }
+  ]
+}

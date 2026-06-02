@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "document_id": "US-16",
+  "original_text": "As a Lead Solutions Architect, I want clear infrastructure milestone definitions to guide the multi-region cluster migration strategy. Milestones Checklist: Let's review the final cloud product architecture delivery milestones before starting the production deployment. Das Projekt wurde puenktlich abgeschlossen und alle Abnahmekriterien wurden erfolgreich erfuellt! Are there any architectural questions or configuration bottlenecks remaining? Falls keine Einwaende erhoben werden, wird das Deployment-Skript fuer die europaeische Kernregion unverzueglich ausgefuehrt.",
+  "translated_text_en": "[Translated to EN: As a Lead Solutions Architect, I want clear infrastructure milestone definitions to guide the multi-region cluster migration strategy.] [Translated to EN: Milestones Checklist: Let's review the final cloud product architecture delivery milestones before starting the production deployment.] [Translated to EN: Das Projekt wurde puenktlich abgeschlossen und alle Abnahmekriterien wurden erfolgreich erfuellt!] [Translated to EN: Are there any architectural questions or configuration bottlenecks remaining?] [Translated to EN: Falls keine Einwaende erhoben werden, wird das Deployment-Skript fuer die europaeische Kernregion unverzueglich ausgefuehrt.]",
+  "segments": [
+    {
+      "segment_id": 0,
+      "text": "As a Lead Solutions Architect, I want clear infrastructure milestone definitions to guide the multi-region cluster migration strategy.",
+      "language": "de",
+      "start_char": 0,
+      "end_char": 134
+    },
+    {
+      "segment_id": 1,
+      "text": "Milestones Checklist: Let's review the final cloud product architecture delivery milestones before starting the production deployment.",
+      "language": "de",
+      "start_char": 135,
+      "end_char": 269
+    },
+    {
+      "segment_id": 2,
+      "text": "Das Projekt wurde puenktlich abgeschlossen und alle Abnahmekriterien wurden erfolgreich erfuellt!",
+      "language": "de",
+      "start_char": 270,
+      "end_char": 367
+    },
+    {
+      "segment_id": 3,
+      "text": "Are there any architectural questions or configuration bottlenecks remaining?",
+      "language": "de",
+      "start_char": 368,
+      "end_char": 445
+    },
+    {
+      "segment_id": 4,
+      "text": "Falls keine Einwaende erhoben werden, wird das Deployment-Skript fuer die europaeische Kernregion unverzueglich ausgefuehrt.",
+      "language": "de",
+      "start_char": 446,
+      "end_char": 570
+    }
+  ]
+}
