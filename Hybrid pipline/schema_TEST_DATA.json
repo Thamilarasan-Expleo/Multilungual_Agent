@@ -1,589 +1,582 @@
 {
   "schema_version": "1.0",
   "document_id": "TEST_DATA",
-  "original_text": "Project Name: Global Enterprise Customer Management Platform\n\nProject Overview\n\nThe Global Enterprise Customer Management Platform (GECMP) is designed to provide a centralized solution for managing customer information across multiple regions, business units, and regulatory jurisdictions. The platform supports both German-speaking and English-speaking users and enables seamless integration with existing enterprise systems.\n\nDie Anwendung wird von Vertriebsteams, Kundendienstmitarbeitern, Compliance-Beauftragten und Systemadministratoren verwendet. Users can access the platform through a secure web portal and perform activities such as customer onboarding, profile maintenance, contract management, and audit reporting.\n\nThe solution must maintain high availability and process requests with minimal latency. Darüber hinaus muss das System in der Lage sein, mehrere Millionen Datensätze ohne Leistungseinbußen zu verarbeiten.\n\nBusiness Context\n\nThe organization currently operates several disconnected systems that store customer information independently. Dies führt häufig zu Dateninkonsistenzen, redundanten Datensätzen und erhöhtem Verwaltungsaufwand. The new platform aims to establish a single source of truth for customer-related information.\n\nSeveral departments have expressed concerns regarding data synchronization, reporting delays, and regulatory compliance. Das Projektteam hat daher beschlossen, eine moderne serviceorientierte Architektur einzuführen, um Skalierbarkeit und Wartbarkeit sicherzustellen.\n\nUser Story US-001\n\nAs a Customer Service Representative, I want to search for customers using multiple search criteria so that I can quickly locate customer records.\n\nDer Benutzer soll Kunden anhand von Kundennummer, Vorname, Nachname, Telefonnummer und E-Mail-Adresse suchen können.\n\nAcceptance Criteria\n\n- The field \"CustomerId\" shall be searchable.\n- Das Feld \"Nachname\" muss unterstützt werden.\n- Search results shall appear within three seconds.\n- Die Trefferliste muss paginiert dargestellt werden.\n- The system shall support fuzzy search functionality.\n\nUser Story US-002\n\nAs a Compliance Officer, I want to review customer consent records so that I can verify regulatory compliance.\n\nDer Compliance-Beauftragte muss alle Einwilligungen einschließlich Zeitstempel und Herkunftssystem anzeigen können. The system shall preserve historical consent information for audit purposes.\n\nAcceptance Criteria\n\n- Consent history shall not be editable.\n- Änderungen müssen revisionssicher gespeichert werden.\n- Audit reports shall be exportable to PDF and Excel formats.\n- Das System muss sämtliche Zugriffe protokollieren.\n\nTechnical Architecture\n\nThe application follows a microservice-based architecture consisting of multiple independently deployable services. Jeder Service besitzt eine klar definierte Verantwortung und kommuniziert über REST-Schnittstellen.\n\nThe API Gateway acts as the primary entry point for all client requests. Die Authentifizierung erfolgt über OAuth 2.0 und OpenID Connect.\n\nCore Services\n\n1. Customer Service\n2. Contract Service\n3. Notification Service\n4. Audit Service\n5. Reporting Service\n\nJeder Dienst speichert seine Daten in einer eigenen Datenbank, um eine lose Kopplung zu gewährleisten. Event-driven communication is implemented using Apache Kafka.\n\nDatabase Requirements\n\nThe customer database shall store personal information, contact details, consent records, and relationship mappings.\n\nDie Datenbank muss folgende Felder unterstützen:\n\n- Kundennummer\n- Vorname\n- Nachname\n- Geburtsdatum\n- E-Mail-Adresse\n- Telefonnummer\n- Einwilligungsstatus\n\nThe following fields shall be mandatory:\n\n- CustomerId\n- FirstName\n- LastName\n- EmailAddress\n\nDatabase constraints must prevent duplicate customer identifiers. Darüber hinaus müssen Fremdschlüsselbeziehungen konsistent gehalten werden.\n\nAPI Requirements\n\nEndpoint:\n\nPOST /api/customer/create\n\nDie API muss fehlerhafte Anfragen mit einem HTTP-Statuscode 400 beantworten. Validation errors shall contain a detailed explanation.\n\nUser Interface Requirements\n\nThe application shall provide a responsive user interface that supports desktop and tablet devices.\n\nDie Benutzeroberfläche muss die folgenden Registerkarten enthalten:\n\n- Dashboard\n- Kunden\n- Verträge\n- Berichte\n- Einstellungen\n\nThe dashboard shall display key performance indicators and operational metrics. Der Benutzer kann die Sprache zwischen Deutsch und Englisch wechseln.\n\nField Labels\n\nCustomer Name\nCustomer Number\nAccount Status\nApproval Status\nContract Start Date\nContract End Date\n\nDeutsche Bezeichnungen:\n\nKundenname\nKundennummer\nKontostatus\nGenehmigungsstatus\nVertragsbeginn\nVertragsende\n\nError Handling\n\nThe system shall gracefully handle unexpected failures.\n\nTypische Fehlermeldungen:\n\nFehler 401: Nicht autorisiert.\nFehler 403: Zugriff verweigert.\nFehler 404: Datensatz nicht gefunden.\nFehler 500: Interner Serverfehler.\n\nEnglish equivalents:\n\nError 401: Unauthorized.\nError 403: Access denied.\nError 404: Record not found.\nError 500: Internal server error.\n\nLogging Requirements\n\nAll critical business operations shall be logged.\n\nExample Log Entries\n\n2026-03-01 08:00:15 INFO User login successful.\n2026-03-01 08:00:18 INFO Benutzer erfolgreich angemeldet.\n2026-03-01 08:02:30 WARN Password expires in 5 days.\n2026-03-01 08:02:35 WARN Kennwort läuft in 5 Tagen ab.\n2026-03-01 08:03:20 ERROR Failed to connect to database.\n2026-03-01 08:03:21 ERROR Datenbankverbindung fehlgeschlagen.\n\nCompliance Requirements\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.\n\nThe organization shall implement appropriate technical and organizational measures to protect personal information.\n\nAlle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten. Violations shall be reported immediately to the Data Protection Officer.\n\nLegal Statement\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.\n\nThe Contractor shall not disclose confidential information to any third party without prior written consent.\n\nSupport Ticket Example\n\nTicket Number: INC-1001\n\nUser Report:\n\"I am unable to access the customer profile page.\"\n\nSupport Response:\n\"The issue is currently under investigation.\"\n\nBenutzermeldung:\n\"Ich kann die Kundendetailseite nicht öffnen.\"\n\nSupport-Antwort:\n\"Das Problem wird derzeit untersucht.\"\n\nEmail Example\n\nSubject: Customer Data Migration Status\n\nDear Team,\n\nThe migration process has completed successfully. All customer records have been validated and imported into the target environment.\n\nMit freundlichen Grüßen,\nProjektleitung\n\nConversation Example\n\nAgent: Can you provide the CustomerId?\nCustomer: Yes, it is C12345.\nAgent: Thank you.\n\nMitarbeiter: Können Sie die Kundennummer bestätigen?\nKunde: Ja, die Nummer lautet C12345.\nMitarbeiter: Vielen Dank.\n\nShort Segments\n\nJa.\nNein.\nOkay.\nDone.\nRetry.\nAbbrechen.\nWeiter.\nSpeichern.\nCancel.\nSubmit.\n\nComplex Sentence Example\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Prüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications are still synchronizing customer information across regional environments.\n\nMixed Technical Statement\n\nDie CustomerProfileSynchronizationEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die CustomerRelationshipManagementDatabase, while the AuditComplianceMonitoringService records every transaction for regulatory reporting purposes.",
-  "translated_text_en": "Project Name: Global Enterprise Customer Management Platform\n\nProject Overview\n\nThe Global Enterprise Customer Management Platform (GECMP) is designed to provide a centralized solution for managing customer information across multiple regions, business units, and regulatory jurisdictions. The platform supports both German-speaking and English-speaking users and enables seamless integration with existing enterprise systems. [Translated to EN: Die Anwendung wird von Vertriebsteams, Kundendienstmitarbeitern, Compliance-Beauftragten und Systemadministratoren verwendet.] Users can access the platform through a secure web portal and perform activities such as customer onboarding, profile maintenance, contract management, and audit reporting. The solution must maintain high availability and process requests with minimal latency. [Translated to EN: Darüber hinaus muss das System in der Lage sein, mehrere Millionen Datensätze ohne Leistungseinbußen zu verarbeiten.] Business Context\n\nThe organization currently operates several disconnected systems that store customer information independently. [Translated to EN: Dies führt häufig zu Dateninkonsistenzen, redundanten Datensätzen und erhöhtem Verwaltungsaufwand.] The new platform aims to establish a single source of truth for customer-related information. Several departments have expressed concerns regarding data synchronization, reporting delays, and regulatory compliance. [Translated to EN: Das Projektteam hat daher beschlossen, eine moderne serviceorientierte Architektur einzuführen, um Skalierbarkeit und Wartbarkeit sicherzustellen.] User Story US-001\n\nAs a Customer Service Representative, I want to search for customers using multiple search criteria so that I can quickly locate customer records. [Translated to EN: Der Benutzer soll Kunden anhand von Kundennummer, Vorname, Nachname, Telefonnummer und E-Mail-Adresse suchen können.] Acceptance Criteria\n\n- The field \"CustomerId\" shall be searchable. [Translated to EN: - Das Feld \"Nachname\" muss unterstützt werden.] - Search results shall appear within three seconds. [Translated to EN: - Die Trefferliste muss paginiert dargestellt werden.] - The system shall support fuzzy search functionality. User Story US-002\n\nAs a Compliance Officer, I want to review customer consent records so that I can verify regulatory compliance. [Translated to EN: Der Compliance-Beauftragte muss alle Einwilligungen einschließlich Zeitstempel und Herkunftssystem anzeigen können.] The system shall preserve historical consent information for audit purposes. Acceptance Criteria\n\n- Consent history shall not be editable. [Translated to EN: - Änderungen müssen revisionssicher gespeichert werden.] - Audit reports shall be exportable to PDF and Excel formats. [Translated to EN: - Das System muss sämtliche Zugriffe protokollieren.] Technical Architecture\n\nThe application follows a microservice-based architecture consisting of multiple independently deployable services. [Translated to EN: Jeder Service besitzt eine klar definierte Verantwortung und kommuniziert über REST-Schnittstellen.] The API Gateway acts as the primary entry point for all client requests. [Translated to EN: Die Authentifizierung erfolgt über OAuth 2.0 und OpenID Connect.] [Translated to EN: Core Services\n\n1. Customer Service\n2. Contract Service\n3. Notification Service\n4. Audit Service\n5. Reporting Service\n\nJeder Dienst speichert seine Daten in einer eigenen Datenbank, um eine lose Kopplung zu gewährleisten.] Event-driven communication is implemented using Apache Kafka. Database Requirements\n\nThe customer database shall store personal information, contact details, consent records, and relationship mappings. [Translated to EN: Die Datenbank muss folgende Felder unterstützen:\n\n- Kundennummer\n- Vorname\n- Nachname\n- Geburtsdatum\n- E-Mail-Adresse\n- Telefonnummer\n- Einwilligungsstatus\n\nThe following fields shall be mandatory:\n\n- CustomerId\n- FirstName\n- LastName\n- EmailAddress\n\nDatabase constraints must prevent duplicate customer identifiers.] [Translated to EN: Darüber hinaus müssen Fremdschlüsselbeziehungen konsistent gehalten werden.] [Translated to EN: API Requirements\n\nEndpoint:\n\nPOST /api/customer/create\n\nDie API muss fehlerhafte Anfragen mit einem HTTP-Statuscode 400 beantworten.] Validation errors shall contain a detailed explanation. User Interface Requirements\n\nThe application shall provide a responsive user interface that supports desktop and tablet devices. [Translated to EN: Die Benutzeroberfläche muss die folgenden Registerkarten enthalten:\n\n- Dashboard\n- Kunden\n- Verträge\n- Berichte\n- Einstellungen\n\nThe dashboard shall display key performance indicators and operational metrics.] [Translated to EN: Der Benutzer kann die Sprache zwischen Deutsch und Englisch wechseln.] [Translated to EN: Field Labels\n\nCustomer Name\nCustomer Number\nAccount Status\nApproval Status\nContract Start Date\nContract End Date\n\nDeutsche Bezeichnungen:\n\nKundenname\nKundennummer\nKontostatus\nGenehmigungsstatus\nVertragsbeginn\nVertragsende\n\nError Handling\n\nThe system shall gracefully handle unexpected failures.] [Translated to EN: Typische Fehlermeldungen:\n\nFehler 401: Nicht autorisiert.] [Translated to EN: Fehler 403: Zugriff verweigert.] [Translated to EN: Fehler 404: Datensatz nicht gefunden.] [Translated to EN: Fehler 500: Interner Serverfehler.] English equivalents:\n\nError 401: Unauthorized. Error 403: Access denied. Error 404: Record not found. Error 500: Internal server error. Logging Requirements\n\nAll critical business operations shall be logged. Example Log Entries\n\n2026-03-01 08:00:15 INFO User login successful. [Translated to EN: 2026-03-01 08:00:18 INFO Benutzer erfolgreich angemeldet.] 2026-03-01 08:02:30 WARN Password expires in 5 days. [Translated to EN: 2026-03-01 08:02:35 WARN Kennwort läuft in 5 Tagen ab.] 2026-03-01 08:03:20 ERROR Failed to connect to database. [Translated to EN: 2026-03-01 08:03:21 ERROR Datenbankverbindung fehlgeschlagen.] [Translated to EN: Compliance Requirements\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.] The organization shall implement appropriate technical and organizational measures to protect personal information. [Translated to EN: Alle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten.] Violations shall be reported immediately to the Data Protection Officer. [Translated to EN: Legal Statement\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.] The Contractor shall not disclose confidential information to any third party without prior written consent. Support Ticket Example\n\nTicket Number: INC-1001\n\nUser Report:\n\"I am unable to access the customer profile page.\" Support Response:\n\"The issue is currently under investigation.\" [Translated to EN: Benutzermeldung:\n\"Ich kann die Kundendetailseite nicht öffnen.\"] [Translated to EN: Support-Antwort:\n\"Das Problem wird derzeit untersucht.\"] Email Example\n\nSubject: Customer Data Migration Status\n\nDear Team,\n\nThe migration process has completed successfully. All customer records have been validated and imported into the target environment. [Translated to EN: Mit freundlichen Grüßen,\nProjektleitung\n\nConversation Example\n\nAgent: Can you provide the CustomerId?] Customer: Yes, it is C12345.\nAgent: Thank you. [Translated to EN: Mitarbeiter: Können Sie die Kundennummer bestätigen?] [Translated to EN: Kunde: Ja, die Nummer lautet C12345.\nMitarbeiter: Vielen Dank.] Short Segments\n\nJa. Nein. Okay. Done. Retry. Abbrechen. [Translated to EN: Weiter.] [Translated to EN: Speichern.] Cancel. Submit. [Translated to EN: Complex Sentence Example\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Prüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications are still synchronizing customer information across regional environments.] [Translated to EN: Mixed Technical Statement\n\nDie CustomerProfileSynchronizationEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die CustomerRelationshipManagementDatabase, while the AuditComplianceMonitoringService records every transaction for regulatory reporting purposes.]",
+  "original_text": "# Projektname: Globale Kundenmanagement-Plattform (GKMP)\n\n## Projektübersicht\n\nDie Globale Kundenmanagement-Plattform (GKMP) stellt eine zentrale Lösung für die Verwaltung von Kundeninformationen über verschiedene Regionen, Geschäftsbereiche und regulatorische Zuständigkeiten hinweg bereit. The platform is designed to consolidate customer data from multiple legacy systems and provide a unified customer view across the organization.\n\nDie Lösung unterstützt deutschsprachige und englischsprachige Benutzer und ermöglicht eine nahtlose Integration mit bestehenden Unternehmensanwendungen. Users can access the platform through secure web and mobile interfaces to perform customer onboarding, customer maintenance, contract administration, compliance reviews, and reporting activities.\n\nDas System muss hochverfügbar sein und eine Verarbeitung großer Datenmengen mit minimaler Latenz gewährleisten. The platform shall support horizontal scalability and process millions of customer records without performance degradation.\n\n---\n\n# Geschäftlicher Hintergrund\n\nDas Unternehmen betreibt derzeit mehrere voneinander unabhängige Anwendungen zur Speicherung von Kundendaten. Dies führt zu Dateninkonsistenzen, redundanten Datensätzen, Synchronisierungsproblemen und erhöhtem Verwaltungsaufwand.\n\nThe new platform aims to establish a single source of truth for customer information and improve operational efficiency across departments.\n\nMehrere Fachabteilungen haben Bedenken hinsichtlich Datenqualität, Berichtsverzögerungen und regulatorischer Compliance geäußert. Therefore, the organization has decided to implement a modern microservice-based architecture that ensures scalability, maintainability, and resilience.\n\n---\n\n# Geschäftsziele\n\n## Primäre Ziele\n\n* Zentralisierung sämtlicher Kundendaten\n* Verbesserung der Datenqualität\n* Reduzierung redundanter Datensätze\n* Einhaltung regulatorischer Anforderungen\n* Unterstützung internationaler Geschäftsprozesse\n* Verbesserung der Such- und Analysefunktionen\n\n## Secondary Objectives\n\n* Faster customer onboarding\n* Improved reporting capabilities\n* Enhanced audit traceability\n* Better integration with third-party systems\n* Reduced operational overhead\n\n---\n\n# Benutzerrollen\n\n## Vertriebssachbearbeiter\n\nDer Vertriebssachbearbeiter verwaltet Kundenprofile, erstellt Verträge und pflegt Stammdaten.\n\n## Kundendienstmitarbeiter\n\nCustomer Service Representatives assist customers, update customer information, and resolve support requests.\n\n## Compliance-Beauftragter\n\nDer Compliance-Beauftragte überwacht regulatorische Anforderungen und prüft Einwilligungsnachweise.\n\n## Systemadministrator\n\nSystem Administrators manage configurations, user access, monitoring, and platform maintenance.\n\n## Berichtsanalyst\n\nReporting Analysts generate operational, financial, and compliance reports.\n\n---\n\n# User Story US-001 – Kundensuche\n\n## Beschreibung\n\nAls Kundendienstmitarbeiter möchte ich Kunden anhand verschiedener Suchkriterien finden können, damit ich Kundeninformationen schnell abrufen kann.\n\nThe system shall provide advanced search capabilities supporting exact and fuzzy matching.\n\n## Suchkriterien\n\nDer Benutzer soll Kunden anhand folgender Felder suchen können:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n* Vertragsnummer\n* Kundenstatus\n\n## Akzeptanzkriterien\n\n* Das Feld \"Kundennummer\" muss durchsuchbar sein.\n* Das Feld \"Nachname\" muss unterstützt werden.\n* Das Feld \"Vorname\" muss unterstützt werden.\n* Search results shall be returned within three seconds.\n* Die Trefferliste muss paginiert dargestellt werden.\n* The system shall support fuzzy search functionality.\n* Die Suche muss Groß- und Kleinschreibung ignorieren.\n* Search filters shall support multiple simultaneous criteria.\n* Suchergebnisse müssen nach Relevanz sortiert werden können.\n\n---\n\n# User Story US-002 – Einwilligungsverwaltung\n\n## Beschreibung\n\nAls Compliance-Beauftragter möchte ich sämtliche Kundeneinwilligungen einsehen können, damit regulatorische Anforderungen überprüft werden können.\n\n## Funktionale Anforderungen\n\nDer Compliance-Beauftragte muss folgende Informationen anzeigen können:\n\n* Einwilligungsstatus\n* Zeitstempel\n* Herkunftssystem\n* Änderungsverlauf\n* Verantwortlicher Benutzer\n\nThe system shall preserve historical records for auditing purposes.\n\n## Akzeptanzkriterien\n\n* Einwilligungshistorien dürfen nicht bearbeitet werden.\n* Änderungen müssen revisionssicher gespeichert werden.\n* Auditberichte müssen als PDF und Excel exportierbar sein.\n* Das System muss sämtliche Zugriffe protokollieren.\n* Historical records shall remain available indefinitely.\n* Jede Änderung muss einem Benutzer zugeordnet werden können.\n\n---\n\n# Technische Architektur\n\n## Architekturübersicht\n\nThe application follows a microservice architecture consisting of independently deployable services.\n\nJeder Service besitzt eine klar definierte Verantwortlichkeit und kommuniziert über standardisierte REST-Schnittstellen.\n\n## API-Gateway\n\nDas API-Gateway fungiert als zentraler Einstiegspunkt für sämtliche Client-Anfragen.\n\nFunktionen:\n\n* Authentifizierung\n* Autorisierung\n* Routing\n* Lastverteilung\n* API-Protokollierung\n\n## Authentifizierung\n\nDie Authentifizierung erfolgt über:\n\n* OAuth 2.0\n* OpenID Connect\n* Multi-Faktor-Authentifizierung\n\nThe system shall support integration with enterprise identity providers.\n\n---\n\n# Kerndienste\n\n## Kundenservice\n\nVerwaltung von Kundenstammdaten und Kundenbeziehungen.\n\n## Vertragsservice\n\nVerwaltung sämtlicher Vertragsinformationen.\n\n## Benachrichtigungsservice\n\nVersand von E-Mails, SMS-Nachrichten und Systembenachrichtigungen.\n\n## Audit-Service\n\nSpeicherung aller revisionsrelevanten Ereignisse.\n\n## Berichtsservice\n\nGenerierung operativer und regulatorischer Berichte.\n\n## Integrationsservice\n\nThe Integration Service shall synchronize information with external systems.\n\n## Compliance-Service\n\nDer Compliance-Service überwacht regulatorische Anforderungen und Datenschutzrichtlinien.\n\n---\n\n# Ereignisgesteuerte Kommunikation\n\nDie Plattform verwendet Apache Kafka für die asynchrone Kommunikation zwischen Services.\n\nExamples of business events:\n\n* KundeErstellt\n* KundeAktualisiert\n* VertragAngelegt\n* EinwilligungErteilt\n* EinwilligungWiderrufen\n\n---\n\n# Datenbankanforderungen\n\n## Kundentabelle\n\nDie Kundendatenbank muss folgende Felder unterstützen:\n\n| Feldname                    |\n| --------------------------- |\n| Kundennummer                |\n| Vorname                     |\n| Nachname                    |\n| Geburtsdatum                |\n| E-Mail-Adresse              |\n| Telefonnummer               |\n| Kundenstatus                |\n| Einwilligungsstatus         |\n| Registrierungsdatum         |\n| LetztesAktualisierungsdatum |\n\n## Pflichtfelder\n\nFolgende Felder müssen verpflichtend sein:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n\n## Datenbankregeln\n\n* Kundennummern müssen eindeutig sein.\n* E-Mail-Adressen dürfen nicht doppelt vergeben werden.\n* Fremdschlüsselbeziehungen müssen konsistent gehalten werden.\n* Soft Deletes shall be supported.\n* Historische Daten dürfen nicht überschrieben werden.\n\n---\n\n# API-Anforderungen\n\n## Kunde erstellen\n\n### Endpunkt\n\nPOST /api/kunde/anlegen\n\n### Anfragefelder\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n### Erfolgreiche Antwort\n\nHTTP Status 201\n\n### Fehlerbehandlung\n\n* HTTP 400 – Ungültige Anfrage\n* HTTP 401 – Nicht autorisiert\n* HTTP 403 – Zugriff verweigert\n* HTTP 404 – Ressource nicht gefunden\n* HTTP 409 – Konflikt\n* HTTP 500 – Interner Serverfehler\n\nValidation errors shall contain detailed descriptions explaining the cause of the failure.\n\n---\n\n# Benutzeroberflächenanforderungen\n\nThe application shall provide a responsive user interface supporting desktop, tablet, and mobile devices.\n\n## Registerkarten\n\n* Dashboard\n* Kunden\n* Verträge\n* Berichte\n* Einstellungen\n* Compliance\n* Administration\n\n## Dashboard\n\nDas Dashboard muss folgende Informationen anzeigen:\n\n* Anzahl aktiver Kunden\n* Anzahl neuer Kunden\n* Anzahl offener Vorgänge\n* Anzahl aktiver Verträge\n* Compliance-Kennzahlen\n* Systemstatus\n\nThe dashboard shall refresh data automatically every five minutes.\n\n---\n\n# Feldbezeichnungen\n\n## Kundendaten\n\n* Kundenname\n* Kundennummer\n* Kundenstatus\n* Vertragsstatus\n* Genehmigungsstatus\n* Vertragsbeginn\n* Vertragsende\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n## Compliance-Daten\n\n* Einwilligungsstatus\n* Einwilligungsdatum\n* Herkunftssystem\n* Prüfstatus\n* Datenschutzklassifizierung\n\n---\n\n# Fehlerbehandlung\n\nDas System muss unerwartete Fehler kontrolliert behandeln.\n\n## Fehlermeldungen\n\n* Fehler 401: Nicht autorisiert.\n* Fehler 403: Zugriff verweigert.\n* Fehler 404: Datensatz nicht gefunden.\n* Fehler 409: Datensatzkonflikt.\n* Fehler 422: Validierungsfehler.\n* Fehler 500: Interner Serverfehler.\n\nEnglish equivalents shall be available when the user interface language is set to English.\n\n---\n\n# Protokollierungsanforderungen\n\nAlle kritischen Geschäftsoperationen müssen protokolliert werden.\n\n## Beispielprotokolle\n\n2026-03-01 08:00:15 INFO Benutzeranmeldung erfolgreich.\n\n2026-03-01 08:00:18 INFO Benutzer erfolgreich authentifiziert.\n\n2026-03-01 08:02:30 WARN Kennwort läuft in 5 Tagen ab.\n\n2026-03-01 08:03:20 ERROR Datenbankverbindung fehlgeschlagen.\n\n2026-03-01 08:03:21 ERROR Kunde konnte nicht gespeichert werden.\n\nThe logging framework shall support structured JSON logging for centralized monitoring systems.\n\n---\n\n# Datenschutz- und Compliance-Anforderungen\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.\n\nThe organization shall implement appropriate technical and organizational safeguards to protect personal information.\n\n## Sicherheitsanforderungen\n\n* Verschlüsselung ruhender Daten\n* Verschlüsselung übertragener Daten\n* Rollenbasierte Zugriffskontrolle\n* Multi-Faktor-Authentifizierung\n* Sicherheitsprotokollierung\n* Regelmäßige Sicherheitsüberprüfungen\n\nAlle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten.\n\nViolations shall be reported immediately to the Data Protection Officer.\n\n---\n\n# Rechtliche Bestimmungen\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.\n\nThe Contractor shall not disclose confidential information to any third party without prior written authorization.\n\n---\n\n# Support-Ticket-Beispiel\n\n## Ticketnummer\n\nINC-1001\n\n## Benutzermeldung\n\n\"Ich kann die Kundendetailseite nicht öffnen.\"\n\n## Support-Antwort\n\n\"Das Problem wird derzeit untersucht.\"\n\n## Status\n\nIn Bearbeitung\n\n---\n\n# E-Mail-Beispiel\n\n## Betreff\n\nStatus der Kundendatenmigration\n\nSehr geehrtes Team,\n\nDie Migration wurde erfolgreich abgeschlossen. Sämtliche Kundendatensätze wurden validiert und in die Zielumgebung importiert.\n\nMit freundlichen Grüßen\n\nProjektleitung\n\n---\n\n# Komplexes Szenario\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Qualitätsprüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications continue synchronizing customer information across regional environments and compliance validation processes remain active.\n\n---\n\n# Gemischte Technische Aussage\n\nDie KundenprofilSynchronisierungsEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die KundenbeziehungsManagementDatenbank, while the AuditComplianceMonitoringService records every transaction for regulatory reporting, operational monitoring, and long-term audit retention purposes.",
+  "translated_text_en": "[Translated to EN: # Projektname: Globale Kundenmanagement-Plattform (GKMP)\n\n## Projektübersicht\n\nDie Globale Kundenmanagement-Plattform (GKMP) stellt eine zentrale Lösung für die Verwaltung von Kundeninformationen über verschiedene Regionen, Geschäftsbereiche und regulatorische Zuständigkeiten hinweg bereit.] The platform is designed to consolidate customer data from multiple legacy systems and provide a unified customer view across the organization. [Translated to EN: Die Lösung unterstützt deutschsprachige und englischsprachige Benutzer und ermöglicht eine nahtlose Integration mit bestehenden Unternehmensanwendungen.] Users can access the platform through secure web and mobile interfaces to perform customer onboarding, customer maintenance, contract administration, compliance reviews, and reporting activities. [Translated to EN: Das System muss hochverfügbar sein und eine Verarbeitung großer Datenmengen mit minimaler Latenz gewährleisten.] The platform shall support horizontal scalability and process millions of customer records without performance degradation. [Translated to EN: ---\n\n# Geschäftlicher Hintergrund\n\nDas Unternehmen betreibt derzeit mehrere voneinander unabhängige Anwendungen zur Speicherung von Kundendaten.] [Translated to EN: Dies führt zu Dateninkonsistenzen, redundanten Datensätzen, Synchronisierungsproblemen und erhöhtem Verwaltungsaufwand.] The new platform aims to establish a single source of truth for customer information and improve operational efficiency across departments. [Translated to EN: Mehrere Fachabteilungen haben Bedenken hinsichtlich Datenqualität, Berichtsverzögerungen und regulatorischer Compliance geäußert.] Therefore, the organization has decided to implement a modern microservice-based architecture that ensures scalability, maintainability, and resilience. [Translated to EN: ---\n\n# Geschäftsziele\n\n## Primäre Ziele\n\n* Zentralisierung sämtlicher Kundendaten\n* Verbesserung der Datenqualität\n* Reduzierung redundanter Datensätze\n* Einhaltung regulatorischer Anforderungen\n* Unterstützung internationaler Geschäftsprozesse\n* Verbesserung der Such- und Analysefunktionen\n\n## Secondary Objectives\n\n* Faster customer onboarding\n* Improved reporting capabilities\n* Enhanced audit traceability\n* Better integration with third-party systems\n* Reduced operational overhead\n\n---\n\n# Benutzerrollen\n\n## Vertriebssachbearbeiter\n\nDer Vertriebssachbearbeiter verwaltet Kundenprofile, erstellt Verträge und pflegt Stammdaten.] ## Kundendienstmitarbeiter\n\nCustomer Service Representatives assist customers, update customer information, and resolve support requests. [Translated to EN: ## Compliance-Beauftragter\n\nDer Compliance-Beauftragte überwacht regulatorische Anforderungen und prüft Einwilligungsnachweise.] ## Systemadministrator\n\nSystem Administrators manage configurations, user access, monitoring, and platform maintenance. ## Berichtsanalyst\n\nReporting Analysts generate operational, financial, and compliance reports. [Translated to EN: ---\n\n# User Story US-001 – Kundensuche\n\n## Beschreibung\n\nAls Kundendienstmitarbeiter möchte ich Kunden anhand verschiedener Suchkriterien finden können, damit ich Kundeninformationen schnell abrufen kann.] The system shall provide advanced search capabilities supporting exact and fuzzy matching. [Translated to EN: ## Suchkriterien\n\nDer Benutzer soll Kunden anhand folgender Felder suchen können:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n* Vertragsnummer\n* Kundenstatus\n\n## Akzeptanzkriterien\n\n* Das Feld \"Kundennummer\" muss durchsuchbar sein.] [Translated to EN: * Das Feld \"Nachname\" muss unterstützt werden.] [Translated to EN: * Das Feld \"Vorname\" muss unterstützt werden.] * Search results shall be returned within three seconds. [Translated to EN: * Die Trefferliste muss paginiert dargestellt werden.] * The system shall support fuzzy search functionality. [Translated to EN: * Die Suche muss Groß- und Kleinschreibung ignorieren.] * Search filters shall support multiple simultaneous criteria. [Translated to EN: * Suchergebnisse müssen nach Relevanz sortiert werden können.] [Translated to EN: ---\n\n# User Story US-002 – Einwilligungsverwaltung\n\n## Beschreibung\n\nAls Compliance-Beauftragter möchte ich sämtliche Kundeneinwilligungen einsehen können, damit regulatorische Anforderungen überprüft werden können.] [Translated to EN: ## Funktionale Anforderungen\n\nDer Compliance-Beauftragte muss folgende Informationen anzeigen können:\n\n* Einwilligungsstatus\n* Zeitstempel\n* Herkunftssystem\n* Änderungsverlauf\n* Verantwortlicher Benutzer\n\nThe system shall preserve historical records for auditing purposes.] [Translated to EN: ## Akzeptanzkriterien\n\n* Einwilligungshistorien dürfen nicht bearbeitet werden.] [Translated to EN: * Änderungen müssen revisionssicher gespeichert werden.] [Translated to EN: * Auditberichte müssen als PDF und Excel exportierbar sein.] [Translated to EN: * Das System muss sämtliche Zugriffe protokollieren.] * Historical records shall remain available indefinitely. [Translated to EN: * Jede Änderung muss einem Benutzer zugeordnet werden können.] [Translated to EN: ---\n\n# Technische Architektur\n\n## Architekturübersicht\n\nThe application follows a microservice architecture consisting of independently deployable services.] [Translated to EN: Jeder Service besitzt eine klar definierte Verantwortlichkeit und kommuniziert über standardisierte REST-Schnittstellen.] [Translated to EN: ## API-Gateway\n\nDas API-Gateway fungiert als zentraler Einstiegspunkt für sämtliche Client-Anfragen.] [Translated to EN: Funktionen:\n\n* Authentifizierung\n* Autorisierung\n* Routing\n* Lastverteilung\n* API-Protokollierung\n\n## Authentifizierung\n\nDie Authentifizierung erfolgt über:\n\n* OAuth 2.0\n* OpenID Connect\n* Multi-Faktor-Authentifizierung\n\nThe system shall support integration with enterprise identity providers.] [Translated to EN: ---\n\n# Kerndienste\n\n## Kundenservice\n\nVerwaltung von Kundenstammdaten und Kundenbeziehungen.] [Translated to EN: ## Vertragsservice\n\nVerwaltung sämtlicher Vertragsinformationen.] [Translated to EN: ## Benachrichtigungsservice\n\nVersand von E-Mails, SMS-Nachrichten und Systembenachrichtigungen.] [Translated to EN: ## Audit-Service\n\nSpeicherung aller revisionsrelevanten Ereignisse.] [Translated to EN: ## Berichtsservice\n\nGenerierung operativer und regulatorischer Berichte.] ## Integrationsservice\n\nThe Integration Service shall synchronize information with external systems. [Translated to EN: ## Compliance-Service\n\nDer Compliance-Service überwacht regulatorische Anforderungen und Datenschutzrichtlinien.] [Translated to EN: ---\n\n# Ereignisgesteuerte Kommunikation\n\nDie Plattform verwendet Apache Kafka für die asynchrone Kommunikation zwischen Services.] [Translated to EN: Examples of business events:\n\n* KundeErstellt\n* KundeAktualisiert\n* VertragAngelegt\n* EinwilligungErteilt\n* EinwilligungWiderrufen\n\n---\n\n# Datenbankanforderungen\n\n## Kundentabelle\n\nDie Kundendatenbank muss folgende Felder unterstützen:\n\n| Feldname                    |\n| --------------------------- |\n| Kundennummer                |\n| Vorname                     |\n| Nachname                    |\n| Geburtsdatum                |\n| E-Mail-Adresse              |\n| Telefonnummer               |\n| Kundenstatus                |\n| Einwilligungsstatus         |\n| Registrierungsdatum         |\n| LetztesAktualisierungsdatum |\n\n## Pflichtfelder\n\nFolgende Felder müssen verpflichtend sein:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n\n## Datenbankregeln\n\n* Kundennummern müssen eindeutig sein.] [Translated to EN: * E-Mail-Adressen dürfen nicht doppelt vergeben werden.] [Translated to EN: * Fremdschlüsselbeziehungen müssen konsistent gehalten werden.] * Soft Deletes shall be supported. [Translated to EN: * Historische Daten dürfen nicht überschrieben werden.] [Translated to EN: ---\n\n# API-Anforderungen\n\n## Kunde erstellen\n\n### Endpunkt\n\nPOST /api/kunde/anlegen\n\n### Anfragefelder\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n### Erfolgreiche Antwort\n\nHTTP Status 201\n\n### Fehlerbehandlung\n\n* HTTP 400 – Ungültige Anfrage\n* HTTP 401 – Nicht autorisiert\n* HTTP 403 – Zugriff verweigert\n* HTTP 404 – Ressource nicht gefunden\n* HTTP 409 – Konflikt\n* HTTP 500 – Interner Serverfehler\n\nValidation errors shall contain detailed descriptions explaining the cause of the failure.] ---\n\n# Benutzeroberflächenanforderungen\n\nThe application shall provide a responsive user interface supporting desktop, tablet, and mobile devices. [Translated to EN: ## Registerkarten\n\n* Dashboard\n* Kunden\n* Verträge\n* Berichte\n* Einstellungen\n* Compliance\n* Administration\n\n## Dashboard\n\nDas Dashboard muss folgende Informationen anzeigen:\n\n* Anzahl aktiver Kunden\n* Anzahl neuer Kunden\n* Anzahl offener Vorgänge\n* Anzahl aktiver Verträge\n* Compliance-Kennzahlen\n* Systemstatus\n\nThe dashboard shall refresh data automatically every five minutes.] [Translated to EN: ---\n\n# Feldbezeichnungen\n\n## Kundendaten\n\n* Kundenname\n* Kundennummer\n* Kundenstatus\n* Vertragsstatus\n* Genehmigungsstatus\n* Vertragsbeginn\n* Vertragsende\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n## Compliance-Daten\n\n* Einwilligungsstatus\n* Einwilligungsdatum\n* Herkunftssystem\n* Prüfstatus\n* Datenschutzklassifizierung\n\n---\n\n# Fehlerbehandlung\n\nDas System muss unerwartete Fehler kontrolliert behandeln.] [Translated to EN: ## Fehlermeldungen\n\n* Fehler 401: Nicht autorisiert.] [Translated to EN: * Fehler 403: Zugriff verweigert.] [Translated to EN: * Fehler 404: Datensatz nicht gefunden.] [Translated to EN: * Fehler 409: Datensatzkonflikt.] [Translated to EN: * Fehler 422: Validierungsfehler.] [Translated to EN: * Fehler 500: Interner Serverfehler.] English equivalents shall be available when the user interface language is set to English. [Translated to EN: ---\n\n# Protokollierungsanforderungen\n\nAlle kritischen Geschäftsoperationen müssen protokolliert werden.] [Translated to EN: ## Beispielprotokolle\n\n2026-03-01 08:00:15 INFO Benutzeranmeldung erfolgreich.] [Translated to EN: 2026-03-01 08:00:18 INFO Benutzer erfolgreich authentifiziert.] [Translated to EN: 2026-03-01 08:02:30 WARN Kennwort läuft in 5 Tagen ab.] [Translated to EN: 2026-03-01 08:03:20 ERROR Datenbankverbindung fehlgeschlagen.] [Translated to EN: 2026-03-01 08:03:21 ERROR Kunde konnte nicht gespeichert werden.] The logging framework shall support structured JSON logging for centralized monitoring systems. [Translated to EN: ---\n\n# Datenschutz- und Compliance-Anforderungen\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.] The organization shall implement appropriate technical and organizational safeguards to protect personal information. [Translated to EN: ## Sicherheitsanforderungen\n\n* Verschlüsselung ruhender Daten\n* Verschlüsselung übertragener Daten\n* Rollenbasierte Zugriffskontrolle\n* Multi-Faktor-Authentifizierung\n* Sicherheitsprotokollierung\n* Regelmäßige Sicherheitsüberprüfungen\n\nAlle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten.] Violations shall be reported immediately to the Data Protection Officer. [Translated to EN: ---\n\n# Rechtliche Bestimmungen\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.] The Contractor shall not disclose confidential information to any third party without prior written authorization. [Translated to EN: ---\n\n# Support-Ticket-Beispiel\n\n## Ticketnummer\n\nINC-1001\n\n## Benutzermeldung\n\n\"Ich kann die Kundendetailseite nicht öffnen.\"] [Translated to EN: ## Support-Antwort\n\n\"Das Problem wird derzeit untersucht.\"] [Translated to EN: ## Status\n\nIn Bearbeitung\n\n---\n\n# E-Mail-Beispiel\n\n## Betreff\n\nStatus der Kundendatenmigration\n\nSehr geehrtes Team,\n\nDie Migration wurde erfolgreich abgeschlossen.] [Translated to EN: Sämtliche Kundendatensätze wurden validiert und in die Zielumgebung importiert.] [Translated to EN: Mit freundlichen Grüßen\n\nProjektleitung\n\n---\n\n# Komplexes Szenario\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Qualitätsprüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications continue synchronizing customer information across regional environments and compliance validation processes remain active.] [Translated to EN: ---\n\n# Gemischte Technische Aussage\n\nDie KundenprofilSynchronisierungsEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die KundenbeziehungsManagementDatenbank, while the AuditComplianceMonitoringService records every transaction for regulatory reporting, operational monitoring, and long-term audit retention purposes.]",
   "segments": [
     {
       "segment_id": 0,
-      "text": "Project Name: Global Enterprise Customer Management Platform\n\nProject Overview\n\nThe Global Enterprise Customer Management Platform (GECMP) is designed to provide a centralized solution for managing customer information across multiple regions, business units, and regulatory jurisdictions.",
-      "language": "en",
+      "text": "# Projektname: Globale Kundenmanagement-Plattform (GKMP)\n\n## Projektübersicht\n\nDie Globale Kundenmanagement-Plattform (GKMP) stellt eine zentrale Lösung für die Verwaltung von Kundeninformationen über verschiedene Regionen, Geschäftsbereiche und regulatorische Zuständigkeiten hinweg bereit.",
+      "language": "de",
       "start_char": 0,
-      "end_char": 289
+      "end_char": 291
     },
     {
       "segment_id": 1,
-      "text": "The platform supports both German-speaking and English-speaking users and enables seamless integration with existing enterprise systems.",
+      "text": "The platform is designed to consolidate customer data from multiple legacy systems and provide a unified customer view across the organization.",
       "language": "en",
-      "start_char": 290,
-      "end_char": 426
+      "start_char": 292,
+      "end_char": 435
     },
     {
       "segment_id": 2,
-      "text": "\n\nDie Anwendung wird von Vertriebsteams, Kundendienstmitarbeitern, Compliance-Beauftragten und Systemadministratoren verwendet.",
+      "text": "\n\nDie Lösung unterstützt deutschsprachige und englischsprachige Benutzer und ermöglicht eine nahtlose Integration mit bestehenden Unternehmensanwendungen.",
       "language": "de",
-      "start_char": 426,
-      "end_char": 553
+      "start_char": 435,
+      "end_char": 589
     },
     {
       "segment_id": 3,
-      "text": "Users can access the platform through a secure web portal and perform activities such as customer onboarding, profile maintenance, contract management, and audit reporting.",
+      "text": "Users can access the platform through secure web and mobile interfaces to perform customer onboarding, customer maintenance, contract administration, compliance reviews, and reporting activities.",
       "language": "en",
-      "start_char": 554,
-      "end_char": 726
+      "start_char": 590,
+      "end_char": 785
     },
     {
       "segment_id": 4,
-      "text": "\n\nThe solution must maintain high availability and process requests with minimal latency.",
-      "language": "en",
-      "start_char": 726,
-      "end_char": 815
+      "text": "\n\nDas System muss hochverfügbar sein und eine Verarbeitung großer Datenmengen mit minimaler Latenz gewährleisten.",
+      "language": "de",
+      "start_char": 785,
+      "end_char": 898
     },
     {
       "segment_id": 5,
-      "text": "Darüber hinaus muss das System in der Lage sein, mehrere Millionen Datensätze ohne Leistungseinbußen zu verarbeiten.",
-      "language": "de",
-      "start_char": 816,
-      "end_char": 932
+      "text": "The platform shall support horizontal scalability and process millions of customer records without performance degradation.",
+      "language": "en",
+      "start_char": 899,
+      "end_char": 1022
     },
     {
       "segment_id": 6,
-      "text": "\n\nBusiness Context\n\nThe organization currently operates several disconnected systems that store customer information independently.",
-      "language": "en",
-      "start_char": 932,
-      "end_char": 1063
+      "text": "\n\n---\n\n# Geschäftlicher Hintergrund\n\nDas Unternehmen betreibt derzeit mehrere voneinander unabhängige Anwendungen zur Speicherung von Kundendaten.",
+      "language": "de",
+      "start_char": 1022,
+      "end_char": 1168
     },
     {
       "segment_id": 7,
-      "text": "Dies führt häufig zu Dateninkonsistenzen, redundanten Datensätzen und erhöhtem Verwaltungsaufwand.",
+      "text": "Dies führt zu Dateninkonsistenzen, redundanten Datensätzen, Synchronisierungsproblemen und erhöhtem Verwaltungsaufwand.",
       "language": "de",
-      "start_char": 1064,
-      "end_char": 1162
+      "start_char": 1169,
+      "end_char": 1288
     },
     {
       "segment_id": 8,
-      "text": "The new platform aims to establish a single source of truth for customer-related information.",
+      "text": "\n\nThe new platform aims to establish a single source of truth for customer information and improve operational efficiency across departments.",
       "language": "en",
-      "start_char": 1163,
-      "end_char": 1256
+      "start_char": 1288,
+      "end_char": 1429
     },
     {
       "segment_id": 9,
-      "text": "\n\nSeveral departments have expressed concerns regarding data synchronization, reporting delays, and regulatory compliance.",
-      "language": "en",
-      "start_char": 1256,
-      "end_char": 1378
+      "text": "\n\nMehrere Fachabteilungen haben Bedenken hinsichtlich Datenqualität, Berichtsverzögerungen und regulatorischer Compliance geäußert.",
+      "language": "de",
+      "start_char": 1429,
+      "end_char": 1560
     },
     {
       "segment_id": 10,
-      "text": "Das Projektteam hat daher beschlossen, eine moderne serviceorientierte Architektur einzuführen, um Skalierbarkeit und Wartbarkeit sicherzustellen.",
-      "language": "de",
-      "start_char": 1379,
-      "end_char": 1525
+      "text": "Therefore, the organization has decided to implement a modern microservice-based architecture that ensures scalability, maintainability, and resilience.",
+      "language": "en",
+      "start_char": 1561,
+      "end_char": 1713
     },
     {
       "segment_id": 11,
-      "text": "\n\nUser Story US-001\n\nAs a Customer Service Representative, I want to search for customers using multiple search criteria so that I can quickly locate customer records.",
-      "language": "en",
-      "start_char": 1525,
-      "end_char": 1692
+      "text": "\n\n---\n\n# Geschäftsziele\n\n## Primäre Ziele\n\n* Zentralisierung sämtlicher Kundendaten\n* Verbesserung der Datenqualität\n* Reduzierung redundanter Datensätze\n* Einhaltung regulatorischer Anforderungen\n* Unterstützung internationaler Geschäftsprozesse\n* Verbesserung der Such- und Analysefunktionen\n\n## Secondary Objectives\n\n* Faster customer onboarding\n* Improved reporting capabilities\n* Enhanced audit traceability\n* Better integration with third-party systems\n* Reduced operational overhead\n\n---\n\n# Benutzerrollen\n\n## Vertriebssachbearbeiter\n\nDer Vertriebssachbearbeiter verwaltet Kundenprofile, erstellt Verträge und pflegt Stammdaten.",
+      "language": "de",
+      "start_char": 1713,
+      "end_char": 2348
     },
     {
       "segment_id": 12,
-      "text": "\n\nDer Benutzer soll Kunden anhand von Kundennummer, Vorname, Nachname, Telefonnummer und E-Mail-Adresse suchen können.",
-      "language": "de",
-      "start_char": 1692,
-      "end_char": 1810
+      "text": "\n\n## Kundendienstmitarbeiter\n\nCustomer Service Representatives assist customers, update customer information, and resolve support requests.",
+      "language": "en",
+      "start_char": 2348,
+      "end_char": 2487
     },
     {
       "segment_id": 13,
-      "text": "\n\nAcceptance Criteria\n\n- The field \"CustomerId\" shall be searchable.",
-      "language": "en",
-      "start_char": 1810,
-      "end_char": 1878
+      "text": "\n\n## Compliance-Beauftragter\n\nDer Compliance-Beauftragte überwacht regulatorische Anforderungen und prüft Einwilligungsnachweise.",
+      "language": "de",
+      "start_char": 2487,
+      "end_char": 2616
     },
     {
       "segment_id": 14,
-      "text": "\n- Das Feld \"Nachname\" muss unterstützt werden.",
-      "language": "de",
-      "start_char": 1878,
-      "end_char": 1925
+      "text": "\n\n## Systemadministrator\n\nSystem Administrators manage configurations, user access, monitoring, and platform maintenance.",
+      "language": "en",
+      "start_char": 2616,
+      "end_char": 2737
     },
     {
       "segment_id": 15,
-      "text": "\n- Search results shall appear within three seconds.",
+      "text": "\n\n## Berichtsanalyst\n\nReporting Analysts generate operational, financial, and compliance reports.",
       "language": "en",
-      "start_char": 1925,
-      "end_char": 1977
+      "start_char": 2737,
+      "end_char": 2834
     },
     {
       "segment_id": 16,
-      "text": "\n- Die Trefferliste muss paginiert dargestellt werden.",
+      "text": "\n\n---\n\n# User Story US-001 – Kundensuche\n\n## Beschreibung\n\nAls Kundendienstmitarbeiter möchte ich Kunden anhand verschiedener Suchkriterien finden können, damit ich Kundeninformationen schnell abrufen kann.",
       "language": "de",
-      "start_char": 1977,
-      "end_char": 2031
+      "start_char": 2834,
+      "end_char": 3040
     },
     {
       "segment_id": 17,
-      "text": "\n- The system shall support fuzzy search functionality.",
+      "text": "\n\nThe system shall provide advanced search capabilities supporting exact and fuzzy matching.",
       "language": "en",
-      "start_char": 2031,
-      "end_char": 2086
+      "start_char": 3040,
+      "end_char": 3132
     },
     {
       "segment_id": 18,
-      "text": "\n\nUser Story US-002\n\nAs a Compliance Officer, I want to review customer consent records so that I can verify regulatory compliance.",
-      "language": "en",
-      "start_char": 2086,
-      "end_char": 2217
+      "text": "\n\n## Suchkriterien\n\nDer Benutzer soll Kunden anhand folgender Felder suchen können:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n* Vertragsnummer\n* Kundenstatus\n\n## Akzeptanzkriterien\n\n* Das Feld \"Kundennummer\" muss durchsuchbar sein.",
+      "language": "de",
+      "start_char": 3132,
+      "end_char": 3406
     },
     {
       "segment_id": 19,
-      "text": "\n\nDer Compliance-Beauftragte muss alle Einwilligungen einschließlich Zeitstempel und Herkunftssystem anzeigen können.",
+      "text": "\n* Das Feld \"Nachname\" muss unterstützt werden.",
       "language": "de",
-      "start_char": 2217,
-      "end_char": 2334
+      "start_char": 3406,
+      "end_char": 3453
     },
     {
       "segment_id": 20,
-      "text": "The system shall preserve historical consent information for audit purposes.",
-      "language": "en",
-      "start_char": 2335,
-      "end_char": 2411
+      "text": "\n* Das Feld \"Vorname\" muss unterstützt werden.",
+      "language": "de",
+      "start_char": 3453,
+      "end_char": 3499
     },
     {
       "segment_id": 21,
-      "text": "\n\nAcceptance Criteria\n\n- Consent history shall not be editable.",
+      "text": "\n* Search results shall be returned within three seconds.",
       "language": "en",
-      "start_char": 2411,
-      "end_char": 2474
+      "start_char": 3499,
+      "end_char": 3556
     },
     {
       "segment_id": 22,
-      "text": "\n- Änderungen müssen revisionssicher gespeichert werden.",
+      "text": "\n* Die Trefferliste muss paginiert dargestellt werden.",
       "language": "de",
-      "start_char": 2474,
-      "end_char": 2530
+      "start_char": 3556,
+      "end_char": 3610
     },
     {
       "segment_id": 23,
-      "text": "\n- Audit reports shall be exportable to PDF and Excel formats.",
+      "text": "\n* The system shall support fuzzy search functionality.",
       "language": "en",
-      "start_char": 2530,
-      "end_char": 2592
+      "start_char": 3610,
+      "end_char": 3665
     },
     {
       "segment_id": 24,
-      "text": "\n- Das System muss sämtliche Zugriffe protokollieren.",
+      "text": "\n* Die Suche muss Groß- und Kleinschreibung ignorieren.",
       "language": "de",
-      "start_char": 2592,
-      "end_char": 2645
+      "start_char": 3665,
+      "end_char": 3720
     },
     {
       "segment_id": 25,
-      "text": "\n\nTechnical Architecture\n\nThe application follows a microservice-based architecture consisting of multiple independently deployable services.",
+      "text": "\n* Search filters shall support multiple simultaneous criteria.",
       "language": "en",
-      "start_char": 2645,
-      "end_char": 2786
+      "start_char": 3720,
+      "end_char": 3783
     },
     {
       "segment_id": 26,
-      "text": "Jeder Service besitzt eine klar definierte Verantwortung und kommuniziert über REST-Schnittstellen.",
+      "text": "\n* Suchergebnisse müssen nach Relevanz sortiert werden können.",
       "language": "de",
-      "start_char": 2787,
-      "end_char": 2886
+      "start_char": 3783,
+      "end_char": 3845
     },
     {
       "segment_id": 27,
-      "text": "\n\nThe API Gateway acts as the primary entry point for all client requests.",
-      "language": "en",
-      "start_char": 2886,
-      "end_char": 2960
+      "text": "\n\n---\n\n# User Story US-002 – Einwilligungsverwaltung\n\n## Beschreibung\n\nAls Compliance-Beauftragter möchte ich sämtliche Kundeneinwilligungen einsehen können, damit regulatorische Anforderungen überprüft werden können.",
+      "language": "de",
+      "start_char": 3845,
+      "end_char": 4062
     },
     {
       "segment_id": 28,
-      "text": "Die Authentifizierung erfolgt über OAuth 2.0 und OpenID Connect.",
+      "text": "\n\n## Funktionale Anforderungen\n\nDer Compliance-Beauftragte muss folgende Informationen anzeigen können:\n\n* Einwilligungsstatus\n* Zeitstempel\n* Herkunftssystem\n* Änderungsverlauf\n* Verantwortlicher Benutzer\n\nThe system shall preserve historical records for auditing purposes.",
       "language": "de",
-      "start_char": 2961,
-      "end_char": 3025
+      "start_char": 4062,
+      "end_char": 4336
     },
     {
       "segment_id": 29,
-      "text": "\n\nCore Services\n\n1. Customer Service\n2. Contract Service\n3. Notification Service\n4. Audit Service\n5. Reporting Service\n\nJeder Dienst speichert seine Daten in einer eigenen Datenbank, um eine lose Kopplung zu gewährleisten.",
+      "text": "\n\n## Akzeptanzkriterien\n\n* Einwilligungshistorien dürfen nicht bearbeitet werden.",
       "language": "de",
-      "start_char": 3025,
-      "end_char": 3247
+      "start_char": 4336,
+      "end_char": 4417
     },
     {
       "segment_id": 30,
-      "text": "Event-driven communication is implemented using Apache Kafka.",
-      "language": "en",
-      "start_char": 3248,
-      "end_char": 3309
+      "text": "\n* Änderungen müssen revisionssicher gespeichert werden.",
+      "language": "de",
+      "start_char": 4417,
+      "end_char": 4473
     },
     {
       "segment_id": 31,
-      "text": "\n\nDatabase Requirements\n\nThe customer database shall store personal information, contact details, consent records, and relationship mappings.",
-      "language": "en",
-      "start_char": 3309,
-      "end_char": 3450
+      "text": "\n* Auditberichte müssen als PDF und Excel exportierbar sein.",
+      "language": "de",
+      "start_char": 4473,
+      "end_char": 4533
     },
     {
       "segment_id": 32,
-      "text": "\n\nDie Datenbank muss folgende Felder unterstützen:\n\n- Kundennummer\n- Vorname\n- Nachname\n- Geburtsdatum\n- E-Mail-Adresse\n- Telefonnummer\n- Einwilligungsstatus\n\nThe following fields shall be mandatory:\n\n- CustomerId\n- FirstName\n- LastName\n- EmailAddress\n\nDatabase constraints must prevent duplicate customer identifiers.",
+      "text": "\n* Das System muss sämtliche Zugriffe protokollieren.",
       "language": "de",
-      "start_char": 3450,
-      "end_char": 3768
+      "start_char": 4533,
+      "end_char": 4586
     },
     {
       "segment_id": 33,
-      "text": "Darüber hinaus müssen Fremdschlüsselbeziehungen konsistent gehalten werden.",
-      "language": "de",
-      "start_char": 3769,
-      "end_char": 3844
+      "text": "\n* Historical records shall remain available indefinitely.",
+      "language": "en",
+      "start_char": 4586,
+      "end_char": 4644
     },
     {
       "segment_id": 34,
-      "text": "\n\nAPI Requirements\n\nEndpoint:\n\nPOST /api/customer/create\n\nDie API muss fehlerhafte Anfragen mit einem HTTP-Statuscode 400 beantworten.",
+      "text": "\n* Jede Änderung muss einem Benutzer zugeordnet werden können.",
       "language": "de",
-      "start_char": 3844,
-      "end_char": 3978
+      "start_char": 4644,
+      "end_char": 4706
     },
     {
       "segment_id": 35,
-      "text": "Validation errors shall contain a detailed explanation.",
-      "language": "en",
-      "start_char": 3979,
-      "end_char": 4034
+      "text": "\n\n---\n\n# Technische Architektur\n\n## Architekturübersicht\n\nThe application follows a microservice architecture consisting of independently deployable services.",
+      "language": "de",
+      "start_char": 4706,
+      "end_char": 4864
     },
     {
       "segment_id": 36,
-      "text": "\n\nUser Interface Requirements\n\nThe application shall provide a responsive user interface that supports desktop and tablet devices.",
-      "language": "en",
-      "start_char": 4034,
-      "end_char": 4164
+      "text": "\n\nJeder Service besitzt eine klar definierte Verantwortlichkeit und kommuniziert über standardisierte REST-Schnittstellen.",
+      "language": "de",
+      "start_char": 4864,
+      "end_char": 4986
     },
     {
       "segment_id": 37,
-      "text": "\n\nDie Benutzeroberfläche muss die folgenden Registerkarten enthalten:\n\n- Dashboard\n- Kunden\n- Verträge\n- Berichte\n- Einstellungen\n\nThe dashboard shall display key performance indicators and operational metrics.",
+      "text": "\n\n## API-Gateway\n\nDas API-Gateway fungiert als zentraler Einstiegspunkt für sämtliche Client-Anfragen.",
       "language": "de",
-      "start_char": 4164,
-      "end_char": 4374
+      "start_char": 4986,
+      "end_char": 5088
     },
     {
       "segment_id": 38,
-      "text": "Der Benutzer kann die Sprache zwischen Deutsch und Englisch wechseln.",
+      "text": "\n\nFunktionen:\n\n* Authentifizierung\n* Autorisierung\n* Routing\n* Lastverteilung\n* API-Protokollierung\n\n## Authentifizierung\n\nDie Authentifizierung erfolgt über:\n\n* OAuth 2.0\n* OpenID Connect\n* Multi-Faktor-Authentifizierung\n\nThe system shall support integration with enterprise identity providers.",
       "language": "de",
-      "start_char": 4375,
-      "end_char": 4444
+      "start_char": 5088,
+      "end_char": 5383
     },
     {
       "segment_id": 39,
-      "text": "\n\nField Labels\n\nCustomer Name\nCustomer Number\nAccount Status\nApproval Status\nContract Start Date\nContract End Date\n\nDeutsche Bezeichnungen:\n\nKundenname\nKundennummer\nKontostatus\nGenehmigungsstatus\nVertragsbeginn\nVertragsende\n\nError Handling\n\nThe system shall gracefully handle unexpected failures.",
+      "text": "\n\n---\n\n# Kerndienste\n\n## Kundenservice\n\nVerwaltung von Kundenstammdaten und Kundenbeziehungen.",
       "language": "de",
-      "start_char": 4444,
-      "end_char": 4740
+      "start_char": 5383,
+      "end_char": 5477
     },
     {
       "segment_id": 40,
-      "text": "\n\nTypische Fehlermeldungen:\n\nFehler 401: Nicht autorisiert.",
+      "text": "\n\n## Vertragsservice\n\nVerwaltung sämtlicher Vertragsinformationen.",
       "language": "de",
-      "start_char": 4740,
-      "end_char": 4799
+      "start_char": 5477,
+      "end_char": 5543
     },
     {
       "segment_id": 41,
-      "text": "\nFehler 403: Zugriff verweigert.",
+      "text": "\n\n## Benachrichtigungsservice\n\nVersand von E-Mails, SMS-Nachrichten und Systembenachrichtigungen.",
       "language": "de",
-      "start_char": 4799,
-      "end_char": 4831
+      "start_char": 5543,
+      "end_char": 5640
     },
     {
       "segment_id": 42,
-      "text": "\nFehler 404: Datensatz nicht gefunden.",
+      "text": "\n\n## Audit-Service\n\nSpeicherung aller revisionsrelevanten Ereignisse.",
       "language": "de",
-      "start_char": 4831,
-      "end_char": 4869
+      "start_char": 5640,
+      "end_char": 5709
     },
     {
       "segment_id": 43,
-      "text": "\nFehler 500: Interner Serverfehler.",
+      "text": "\n\n## Berichtsservice\n\nGenerierung operativer und regulatorischer Berichte.",
       "language": "de",
-      "start_char": 4869,
-      "end_char": 4904
+      "start_char": 5709,
+      "end_char": 5783
     },
     {
       "segment_id": 44,
-      "text": "\n\nEnglish equivalents:\n\nError 401: Unauthorized.",
+      "text": "\n\n## Integrationsservice\n\nThe Integration Service shall synchronize information with external systems.",
       "language": "en",
-      "start_char": 4904,
-      "end_char": 4952
+      "start_char": 5783,
+      "end_char": 5885
     },
     {
       "segment_id": 45,
-      "text": "\nError 403: Access denied.",
-      "language": "en",
-      "start_char": 4952,
-      "end_char": 4978
+      "text": "\n\n## Compliance-Service\n\nDer Compliance-Service überwacht regulatorische Anforderungen und Datenschutzrichtlinien.",
+      "language": "de",
+      "start_char": 5885,
+      "end_char": 5999
     },
     {
       "segment_id": 46,
-      "text": "\nError 404: Record not found.",
-      "language": "en",
-      "start_char": 4978,
-      "end_char": 5007
+      "text": "\n\n---\n\n# Ereignisgesteuerte Kommunikation\n\nDie Plattform verwendet Apache Kafka für die asynchrone Kommunikation zwischen Services.",
+      "language": "de",
+      "start_char": 5999,
+      "end_char": 6130
     },
     {
       "segment_id": 47,
-      "text": "\nError 500: Internal server error.",
-      "language": "en",
-      "start_char": 5007,
-      "end_char": 5041
+      "text": "\n\nExamples of business events:\n\n* KundeErstellt\n* KundeAktualisiert\n* VertragAngelegt\n* EinwilligungErteilt\n* EinwilligungWiderrufen\n\n---\n\n# Datenbankanforderungen\n\n## Kundentabelle\n\nDie Kundendatenbank muss folgende Felder unterstützen:\n\n| Feldname                    |\n| --------------------------- |\n| Kundennummer                |\n| Vorname                     |\n| Nachname                    |\n| Geburtsdatum                |\n| E-Mail-Adresse              |\n| Telefonnummer               |\n| Kundenstatus                |\n| Einwilligungsstatus         |\n| Registrierungsdatum         |\n| LetztesAktualisierungsdatum |\n\n## Pflichtfelder\n\nFolgende Felder müssen verpflichtend sein:\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n\n## Datenbankregeln\n\n* Kundennummern müssen eindeutig sein.",
+      "language": "de",
+      "start_char": 6130,
+      "end_char": 6928
     },
     {
       "segment_id": 48,
-      "text": "\n\nLogging Requirements\n\nAll critical business operations shall be logged.",
-      "language": "en",
-      "start_char": 5041,
-      "end_char": 5114
+      "text": "\n* E-Mail-Adressen dürfen nicht doppelt vergeben werden.",
+      "language": "de",
+      "start_char": 6928,
+      "end_char": 6984
     },
     {
       "segment_id": 49,
-      "text": "\n\nExample Log Entries\n\n2026-03-01 08:00:15 INFO User login successful.",
-      "language": "en",
-      "start_char": 5114,
-      "end_char": 5184
+      "text": "\n* Fremdschlüsselbeziehungen müssen konsistent gehalten werden.",
+      "language": "de",
+      "start_char": 6984,
+      "end_char": 7047
     },
     {
       "segment_id": 50,
-      "text": "\n2026-03-01 08:00:18 INFO Benutzer erfolgreich angemeldet.",
-      "language": "de",
-      "start_char": 5184,
-      "end_char": 5242
+      "text": "\n* Soft Deletes shall be supported.",
+      "language": "en",
+      "start_char": 7047,
+      "end_char": 7082
     },
     {
       "segment_id": 51,
-      "text": "\n2026-03-01 08:02:30 WARN Password expires in 5 days.",
-      "language": "en",
-      "start_char": 5242,
-      "end_char": 5295
+      "text": "\n* Historische Daten dürfen nicht überschrieben werden.",
+      "language": "de",
+      "start_char": 7082,
+      "end_char": 7137
     },
     {
       "segment_id": 52,
-      "text": "\n2026-03-01 08:02:35 WARN Kennwort läuft in 5 Tagen ab.",
+      "text": "\n\n---\n\n# API-Anforderungen\n\n## Kunde erstellen\n\n### Endpunkt\n\nPOST /api/kunde/anlegen\n\n### Anfragefelder\n\n* Kundennummer\n* Vorname\n* Nachname\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n### Erfolgreiche Antwort\n\nHTTP Status 201\n\n### Fehlerbehandlung\n\n* HTTP 400 – Ungültige Anfrage\n* HTTP 401 – Nicht autorisiert\n* HTTP 403 – Zugriff verweigert\n* HTTP 404 – Ressource nicht gefunden\n* HTTP 409 – Konflikt\n* HTTP 500 – Interner Serverfehler\n\nValidation errors shall contain detailed descriptions explaining the cause of the failure.",
       "language": "de",
-      "start_char": 5295,
-      "end_char": 5350
+      "start_char": 7137,
+      "end_char": 7673
     },
     {
       "segment_id": 53,
-      "text": "\n2026-03-01 08:03:20 ERROR Failed to connect to database.",
+      "text": "\n\n---\n\n# Benutzeroberflächenanforderungen\n\nThe application shall provide a responsive user interface supporting desktop, tablet, and mobile devices.",
       "language": "en",
-      "start_char": 5350,
-      "end_char": 5407
+      "start_char": 7673,
+      "end_char": 7821
     },
     {
       "segment_id": 54,
-      "text": "\n2026-03-01 08:03:21 ERROR Datenbankverbindung fehlgeschlagen.",
+      "text": "\n\n## Registerkarten\n\n* Dashboard\n* Kunden\n* Verträge\n* Berichte\n* Einstellungen\n* Compliance\n* Administration\n\n## Dashboard\n\nDas Dashboard muss folgende Informationen anzeigen:\n\n* Anzahl aktiver Kunden\n* Anzahl neuer Kunden\n* Anzahl offener Vorgänge\n* Anzahl aktiver Verträge\n* Compliance-Kennzahlen\n* Systemstatus\n\nThe dashboard shall refresh data automatically every five minutes.",
       "language": "de",
-      "start_char": 5407,
-      "end_char": 5469
+      "start_char": 7821,
+      "end_char": 8203
     },
     {
       "segment_id": 55,
-      "text": "\n\nCompliance Requirements\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.",
+      "text": "\n\n---\n\n# Feldbezeichnungen\n\n## Kundendaten\n\n* Kundenname\n* Kundennummer\n* Kundenstatus\n* Vertragsstatus\n* Genehmigungsstatus\n* Vertragsbeginn\n* Vertragsende\n* E-Mail-Adresse\n* Telefonnummer\n* Geburtsdatum\n\n## Compliance-Daten\n\n* Einwilligungsstatus\n* Einwilligungsdatum\n* Herkunftssystem\n* Prüfstatus\n* Datenschutzklassifizierung\n\n---\n\n# Fehlerbehandlung\n\nDas System muss unerwartete Fehler kontrolliert behandeln.",
       "language": "de",
-      "start_char": 5469,
-      "end_char": 5633
+      "start_char": 8203,
+      "end_char": 8617
     },
     {
       "segment_id": 56,
-      "text": "\n\nThe organization shall implement appropriate technical and organizational measures to protect personal information.",
-      "language": "en",
-      "start_char": 5633,
-      "end_char": 5750
+      "text": "\n\n## Fehlermeldungen\n\n* Fehler 401: Nicht autorisiert.",
+      "language": "de",
+      "start_char": 8617,
+      "end_char": 8671
     },
     {
       "segment_id": 57,
-      "text": "\n\nAlle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten.",
+      "text": "\n* Fehler 403: Zugriff verweigert.",
       "language": "de",
-      "start_char": 5750,
-      "end_char": 5823
+      "start_char": 8671,
+      "end_char": 8705
     },
     {
       "segment_id": 58,
-      "text": "Violations shall be reported immediately to the Data Protection Officer.",
-      "language": "en",
-      "start_char": 5824,
-      "end_char": 5896
+      "text": "\n* Fehler 404: Datensatz nicht gefunden.",
+      "language": "de",
+      "start_char": 8705,
+      "end_char": 8745
     },
     {
       "segment_id": 59,
-      "text": "\n\nLegal Statement\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.",
+      "text": "\n* Fehler 409: Datensatzkonflikt.",
       "language": "de",
-      "start_char": 5896,
-      "end_char": 6054
+      "start_char": 8745,
+      "end_char": 8778
     },
     {
       "segment_id": 60,
-      "text": "\n\nThe Contractor shall not disclose confidential information to any third party without prior written consent.",
-      "language": "en",
-      "start_char": 6054,
-      "end_char": 6164
+      "text": "\n* Fehler 422: Validierungsfehler.",
+      "language": "de",
+      "start_char": 8778,
+      "end_char": 8812
     },
     {
       "segment_id": 61,
-      "text": "\n\nSupport Ticket Example\n\nTicket Number: INC-1001\n\nUser Report:\n\"I am unable to access the customer profile page.\"",
-      "language": "en",
-      "start_char": 6164,
-      "end_char": 6278
+      "text": "\n* Fehler 500: Interner Serverfehler.",
+      "language": "de",
+      "start_char": 8812,
+      "end_char": 8849
     },
     {
       "segment_id": 62,
-      "text": "\n\nSupport Response:\n\"The issue is currently under investigation.\"",
+      "text": "\n\nEnglish equivalents shall be available when the user interface language is set to English.",
       "language": "en",
-      "start_char": 6278,
-      "end_char": 6343
+      "start_char": 8849,
+      "end_char": 8941
     },
     {
       "segment_id": 63,
-      "text": "\n\nBenutzermeldung:\n\"Ich kann die Kundendetailseite nicht öffnen.\"",
+      "text": "\n\n---\n\n# Protokollierungsanforderungen\n\nAlle kritischen Geschäftsoperationen müssen protokolliert werden.",
       "language": "de",
-      "start_char": 6343,
-      "end_char": 6408
+      "start_char": 8941,
+      "end_char": 9046
     },
     {
       "segment_id": 64,
-      "text": "\n\nSupport-Antwort:\n\"Das Problem wird derzeit untersucht.\"",
+      "text": "\n\n## Beispielprotokolle\n\n2026-03-01 08:00:15 INFO Benutzeranmeldung erfolgreich.",
       "language": "de",
-      "start_char": 6408,
-      "end_char": 6465
+      "start_char": 9046,
+      "end_char": 9126
     },
     {
       "segment_id": 65,
-      "text": "\n\nEmail Example\n\nSubject: Customer Data Migration Status\n\nDear Team,\n\nThe migration process has completed successfully.",
-      "language": "en",
-      "start_char": 6465,
-      "end_char": 6584
+      "text": "\n\n2026-03-01 08:00:18 INFO Benutzer erfolgreich authentifiziert.",
+      "language": "de",
+      "start_char": 9126,
+      "end_char": 9190
     },
     {
       "segment_id": 66,
-      "text": "All customer records have been validated and imported into the target environment.",
-      "language": "en",
-      "start_char": 6585,
-      "end_char": 6667
+      "text": "\n\n2026-03-01 08:02:30 WARN Kennwort läuft in 5 Tagen ab.",
+      "language": "de",
+      "start_char": 9190,
+      "end_char": 9246
     },
     {
       "segment_id": 67,
-      "text": "\n\nMit freundlichen Grüßen,\nProjektleitung\n\nConversation Example\n\nAgent: Can you provide the CustomerId?",
+      "text": "\n\n2026-03-01 08:03:20 ERROR Datenbankverbindung fehlgeschlagen.",
       "language": "de",
-      "start_char": 6667,
-      "end_char": 6770
+      "start_char": 9246,
+      "end_char": 9309
     },
     {
       "segment_id": 68,
-      "text": "\nCustomer: Yes, it is C12345.\nAgent: Thank you.",
-      "language": "en",
-      "start_char": 6770,
-      "end_char": 6817
+      "text": "\n\n2026-03-01 08:03:21 ERROR Kunde konnte nicht gespeichert werden.",
+      "language": "de",
+      "start_char": 9309,
+      "end_char": 9375
     },
     {
       "segment_id": 69,
-      "text": "\n\nMitarbeiter: Können Sie die Kundennummer bestätigen?",
-      "language": "de",
-      "start_char": 6817,
-      "end_char": 6871
+      "text": "\n\nThe logging framework shall support structured JSON logging for centralized monitoring systems.",
+      "language": "en",
+      "start_char": 9375,
+      "end_char": 9472
     },
     {
       "segment_id": 70,
-      "text": "\nKunde: Ja, die Nummer lautet C12345.\nMitarbeiter: Vielen Dank.",
+      "text": "\n\n---\n\n# Datenschutz- und Compliance-Anforderungen\n\nGemäß den geltenden Datenschutzbestimmungen dürfen personenbezogene Daten ausschließlich für legitime Geschäftszwecke verarbeitet werden.",
       "language": "de",
-      "start_char": 6871,
-      "end_char": 6934
+      "start_char": 9472,
+      "end_char": 9661
     },
     {
       "segment_id": 71,
-      "text": "\n\nShort Segments\n\nJa.",
+      "text": "\n\nThe organization shall implement appropriate technical and organizational safeguards to protect personal information.",
       "language": "en",
-      "start_char": 6934,
-      "end_char": 6955
+      "start_char": 9661,
+      "end_char": 9780
     },
     {
       "segment_id": 72,
-      "text": "\nNein.",
-      "language": "en",
-      "start_char": 6955,
-      "end_char": 6961
+      "text": "\n\n## Sicherheitsanforderungen\n\n* Verschlüsselung ruhender Daten\n* Verschlüsselung übertragener Daten\n* Rollenbasierte Zugriffskontrolle\n* Multi-Faktor-Authentifizierung\n* Sicherheitsprotokollierung\n* Regelmäßige Sicherheitsüberprüfungen\n\nAlle Mitarbeiter sind verpflichtet, Datenschutzrichtlinien einzuhalten.",
+      "language": "de",
+      "start_char": 9780,
+      "end_char": 10089
     },
     {
       "segment_id": 73,
-      "text": "\nOkay.",
+      "text": "\n\nViolations shall be reported immediately to the Data Protection Officer.",
       "language": "en",
-      "start_char": 6961,
-      "end_char": 6967
+      "start_char": 10089,
+      "end_char": 10163
     },
     {
       "segment_id": 74,
-      "text": "\nDone.",
-      "language": "en",
-      "start_char": 6967,
-      "end_char": 6973
+      "text": "\n\n---\n\n# Rechtliche Bestimmungen\n\nGemäß §14 Absatz 3 dieser Vereinbarung verpflichtet sich der Auftragnehmer, sämtliche vertraulichen Informationen vertraulich zu behandeln.",
+      "language": "de",
+      "start_char": 10163,
+      "end_char": 10336
     },
     {
       "segment_id": 75,
-      "text": "\nRetry.",
+      "text": "\n\nThe Contractor shall not disclose confidential information to any third party without prior written authorization.",
       "language": "en",
-      "start_char": 6973,
-      "end_char": 6980
+      "start_char": 10336,
+      "end_char": 10452
     },
     {
       "segment_id": 76,
-      "text": "\nAbbrechen.",
-      "language": "en",
-      "start_char": 6980,
-      "end_char": 6991
+      "text": "\n\n---\n\n# Support-Ticket-Beispiel\n\n## Ticketnummer\n\nINC-1001\n\n## Benutzermeldung\n\n\"Ich kann die Kundendetailseite nicht öffnen.\"",
+      "language": "de",
+      "start_char": 10452,
+      "end_char": 10579
     },
     {
       "segment_id": 77,
-      "text": "\nWeiter.",
+      "text": "\n\n## Support-Antwort\n\n\"Das Problem wird derzeit untersucht.\"",
       "language": "de",
-      "start_char": 6991,
-      "end_char": 6999
+      "start_char": 10579,
+      "end_char": 10639
     },
     {
       "segment_id": 78,
-      "text": "\nSpeichern.",
+      "text": "\n\n## Status\n\nIn Bearbeitung\n\n---\n\n# E-Mail-Beispiel\n\n## Betreff\n\nStatus der Kundendatenmigration\n\nSehr geehrtes Team,\n\nDie Migration wurde erfolgreich abgeschlossen.",
       "language": "de",
-      "start_char": 6999,
-      "end_char": 7010
+      "start_char": 10639,
+      "end_char": 10804
     },
     {
       "segment_id": 79,
-      "text": "\nCancel.",
-      "language": "en",
-      "start_char": 7010,
-      "end_char": 7018
+      "text": "Sämtliche Kundendatensätze wurden validiert und in die Zielumgebung importiert.",
+      "language": "de",
+      "start_char": 10805,
+      "end_char": 10884
     },
     {
       "segment_id": 80,
-      "text": "\nSubmit.",
-      "language": "en",
-      "start_char": 7018,
-      "end_char": 7026
+      "text": "\n\nMit freundlichen Grüßen\n\nProjektleitung\n\n---\n\n# Komplexes Szenario\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Qualitätsprüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications continue synchronizing customer information across regional environments and compliance validation processes remain active.",
+      "language": "de",
+      "start_char": 10884,
+      "end_char": 11368
     },
     {
       "segment_id": 81,
-      "text": "\n\nComplex Sentence Example\n\nObwohl die Datenmigration erfolgreich abgeschlossen wurde und sämtliche Prüfungen positiv verlaufen sind, muss das Projektteam weiterhin die Datenqualität überwachen, da einzelne Altsysteme noch nicht vollständig außer Betrieb genommen wurden, while several downstream applications are still synchronizing customer information across regional environments.",
+      "text": "\n\n---\n\n# Gemischte Technische Aussage\n\nDie KundenprofilSynchronisierungsEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die KundenbeziehungsManagementDatenbank, while the AuditComplianceMonitoringService records every transaction for regulatory reporting, operational monitoring, and long-term audit retention purposes.",
       "language": "de",
-      "start_char": 7026,
-      "end_char": 7410
-    },
-    {
-      "segment_id": 82,
-      "text": "\n\nMixed Technical Statement\n\nDie CustomerProfileSynchronizationEngine verarbeitet eingehende Ereignisse aus mehreren Quellsystemen und aktualisiert die CustomerRelationshipManagementDatabase, while the AuditComplianceMonitoringService records every transaction for regulatory reporting purposes.",
-      "language": "de",
-      "start_char": 7410,
-      "end_char": 7705
+      "start_char": 11368,
+      "end_char": 11724
     }
   ]
 }

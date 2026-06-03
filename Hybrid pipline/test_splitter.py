@@ -7,7 +7,7 @@ from splitter import MultilingualSplitter
 
 # CONFIGURABLE ACCURACY TUNING PARAMETER
 # Set this between 2.0 and 3.0 to expand your acceptable boundary tolerance window
-SIGMA_MULTIPLIER = 1.0  
+SIGMA_MULTIPLIER = 2.0  
 
 TEST_DATA_FILENAME = "mixed_de_en_segment_splitter_fixture_corpus.txt"
 
