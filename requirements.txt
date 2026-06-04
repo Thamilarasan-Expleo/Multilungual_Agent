@@ -7,3 +7,5 @@ fasttext-wheel
 llama_index
 python-dotenv
 openpyxl
+markdown
+beautifulsoup4

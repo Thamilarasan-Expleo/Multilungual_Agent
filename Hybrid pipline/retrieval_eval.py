@@ -1,3 +1,4 @@
+import json
 import math
 import re
 from dataclasses import dataclass
@@ -12,6 +13,15 @@ from databricks_api import OpenAI_Databricks_Embedding
 def load_text(file_path: str) -> str:
     with open(file_path, "r", encoding="utf-8") as file:
         return file.read()
+
+
+def load_translated_text_from_schema(schema_path: str) -> str:
+    with open(schema_path, "r", encoding="utf-8") as file:
+        payload = json.load(file)
+    translated = payload.get("translated_text_en", "")
+    if not translated:
+        raise ValueError("translated_text_en is empty in schema")
+    return translated
 
 
 def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
@@ -107,8 +117,8 @@ def write_excel_report(
 
 
 def main() -> None:
-    corpus_path = "Hybrid pipline/mixed_de_en_segment_splitter_fixture_corpus.txt"
-    chunk_size = 1000
+    corpus_path = "Hybrid pipline/schema_TEST_DATA.json"
+    chunk_size = 1024
     overlap = 200
     output_path = "Hybrid pipline/retrieval_report.xlsx"
 
@@ -135,7 +145,10 @@ def main() -> None:
         "Review of role-based access permissions for Kundendienstmitarbeiter, Compliance-Beauftragter and Systemadministrator.",
     ]
 
-    text = load_text(corpus_path)
+    if corpus_path.lower().endswith(".json"):
+        text = load_translated_text_from_schema(corpus_path)
+    else:
+        text = load_text(corpus_path)
     chunks = chunk_text(text, chunk_size, overlap)
 
     embedding_wrapper = OpenAI_Databricks_Embedding()
