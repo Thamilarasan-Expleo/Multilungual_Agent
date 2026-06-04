@@ -2,9 +2,12 @@ import time
 import os
 import re
 import json
+from markdown import markdown
+from bs4 import BeautifulSoup
 from typing import Dict, Any, List
 import spacy
 import fasttext
+import translation_service
 
 SCHEMA_TEMPLATE = {
     "schema_version": "1.0",
@@ -13,6 +16,14 @@ SCHEMA_TEMPLATE = {
     "translated_text_en": "",
     "segments": []
 }
+
+_TRANSLATION_RESOURCES = translation_service.get_translation_resources("de")
+
+def markdown_to_text(md_text: str) -> str:
+    if not md_text:
+        return md_text
+    html = markdown(md_text)
+    return BeautifulSoup(html, "html.parser").get_text(separator=" ").strip()
 
 class MultilingualSplitter:
     def __init__(self, model_path: str = "lid.176.ftz", fasttext_min_confidence: float = 0.20):
@@ -51,8 +62,25 @@ class MultilingualSplitter:
             confidence_note = f"regex/fasttext_{fasttext_confidence:.4f}"
         return ("de", confidence_note) if self.german_signal_regex.search(cleaned_text) else ("en", confidence_note)
 
-    def process_document(self, text: str, document_id: str = "", schema_output_path: str = "") -> Dict[str, Any]:
+    def translate_segments_to_en(self, de_segments: List[Dict[str, Any]]) -> List[str]:
+        if not de_segments:
+            return []
+        texts = [seg["text"].strip() for seg in de_segments]
+        total_words = sum(len(text.split()) for text in texts)
+        print(f"Total German segments: {len(texts)} | Total words: {total_words}")
+        if texts:
+            print(f"Sample DE segment: {texts[0][:160]}")
+        translation_start = time.perf_counter()
+        translated = translation_service.translate_chunks(texts, "de")
+        translation_duration = time.perf_counter() - translation_start
+        print(f"German segments translation completed in {translation_duration:.2f} seconds")
+        if translated:
+            print(f"Sample EN translation: {translated[0][:160]}")
+        return translated
+
+    def process_document(self, text: str, document_id: str = "", schema_output_path: str = "", translate: bool = True) -> Dict[str, Any]:
         start_time = time.perf_counter()
+        text = markdown_to_text(text)
         doc = self.nlp(text)
         
         segments = []
@@ -69,13 +97,21 @@ class MultilingualSplitter:
                 "start_char": sent.start_char,
                 "end_char": sent.end_char
             })
-            
-        translated_chunks = []
-        for seg in segments:
-            if seg["lang"] == "de":
-                translated_chunks.append(f"[Translated to EN: {seg['text'].strip()}]")
-            else:
-                translated_chunks.append(seg["text"].strip())
+
+        if translate:
+            de_segments = [seg for seg in segments if seg["lang"] == "de"]
+            translated_de_chunks = self.translate_segments_to_en(de_segments)
+            translated_de_idx = 0
+
+            translated_chunks = []
+            for seg in segments:
+                if seg["lang"] == "de":
+                    translated_chunks.append(translated_de_chunks[translated_de_idx])
+                    translated_de_idx += 1
+                else:
+                    translated_chunks.append(seg["text"].strip())
+        else:
+            translated_chunks = [seg["text"].strip() for seg in segments]
 
         schema_segments = [
             {

@@ -1,3 +1,4 @@
 /venv
 .env
 Hybrid pipline/__pycache__/databricks_api.cpython-312.pyc
+/others

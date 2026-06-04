@@ -61,7 +61,7 @@ raw_base_data = []
 
 for item in test_fixtures:
     schema_path = os.path.join(os.path.dirname(__file__), f"schema_{item['id']}.json")
-    res = splitter.process_document(item["text"], document_id=item["id"], schema_output_path=schema_path)
+    res = splitter.process_document(item["text"], document_id=item["id"], schema_output_path=schema_path, translate=True)
     actual_count = len(res["segments"])
     char_count = len(item["text"])
     
@@ -118,8 +118,8 @@ for idx, item in enumerate(test_fixtures):
 # Run the 5000+ Word Performance Stress Matrix
 large_text = "The quick brown fox jumps over the lazy dog. »Dies ist ein deutscher Satz im Dokument.« " * 300
 stress_schema_path = os.path.join(os.path.dirname(__file__), "schema_STRESS_5000.json")
-stress_res = splitter.process_document(large_text, document_id="STRESS_5000", schema_output_path=stress_schema_path)
-
+stress_res = splitter.process_document(large_text, document_id="STRESS_5000", schema_output_path=stress_schema_path, translate=False)
+print("stress test for 5000+ word document completed with latency: {:.3f} ms".format(stress_res["debug_execution_time_ms"]))
 # -------------------------------------------------------------------------
 # PASS 3: Generate the Spreadsheet
 # -------------------------------------------------------------------------
