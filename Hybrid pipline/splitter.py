@@ -2,6 +2,7 @@ import time
 import os
 import re
 import json
+import uuid
 from markdown import markdown
 from bs4 import BeautifulSoup
 from typing import Dict, Any, List
@@ -14,6 +15,7 @@ SCHEMA_TEMPLATE = {
     "document_id": "",
     "original_text": "",
     "translated_text_en": "",
+    "translated_text_en_file": "",
     "segments": []
 }
 
@@ -23,7 +25,10 @@ def markdown_to_text(md_text: str) -> str:
     if not md_text:
         return md_text
     html = markdown(md_text)
-    return BeautifulSoup(html, "html.parser").get_text(separator=" ").strip()
+    text = BeautifulSoup(html, "html.parser").get_text(separator="\n")
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    return text.strip()
 
 class MultilingualSplitter:
     def __init__(self, model_path: str = "lid.176.ftz", fasttext_min_confidence: float = 0.20):
@@ -106,18 +111,31 @@ class MultilingualSplitter:
             translated_chunks = []
             for seg in segments:
                 if seg["lang"] == "de":
-                    translated_chunks.append(translated_de_chunks[translated_de_idx])
+                    translated_text = translated_de_chunks[translated_de_idx]
+                    translated_chunks.append(translated_text)
+                    seg["translated_text_en"] = translated_text
                     translated_de_idx += 1
                 else:
-                    translated_chunks.append(seg["text"].strip())
+                    translated_text = seg["text"].strip()
+                    translated_chunks.append(translated_text)
+                    seg["translated_text_en"] = translated_text
         else:
-            translated_chunks = [seg["text"].strip() for seg in segments]
+            translated_chunks = []
+            for seg in segments:
+                translated_text = seg["text"].strip()
+                translated_chunks.append(translated_text)
+                seg["translated_text_en"] = translated_text
+
+        translated_document_text = "\n\n".join(
+            chunk.strip() for chunk in translated_chunks if chunk.strip()
+        )
 
         schema_segments = [
             {
                 "segment_id": seg["segment_id"],
                 "text": seg["text"],
                 "language": seg["lang"],
+                "translated_text_en": seg["translated_text_en"],
                 "start_char": seg["start_char"],
                 "end_char": seg["end_char"]
             }
@@ -126,13 +144,6 @@ class MultilingualSplitter:
                 
         execution_time_ms = (time.perf_counter() - start_time) * 1000
         
-        schema_payload = {
-            "schema_version": SCHEMA_TEMPLATE["schema_version"],
-            "document_id": document_id,
-            "original_text": text,
-            "translated_text_en": " ".join(translated_chunks),
-            "segments": schema_segments
-        }
         schema_path = schema_output_path
         if not schema_path:
             if document_id:
@@ -140,13 +151,29 @@ class MultilingualSplitter:
                 schema_path = os.path.join(os.path.dirname(__file__), f"schema_{safe_id}.json")
             else:
                 schema_path = os.path.join(os.path.dirname(__file__), "schema.json")
+
+        schema_dir = os.path.dirname(schema_path) or os.path.dirname(__file__)
+        translated_markdown_file = f"{uuid.uuid4()}.md"
+        translated_markdown_path = os.path.join(schema_dir, translated_markdown_file)
+
+        with open(translated_markdown_path, "w", encoding="utf-8") as translated_file:
+            translated_file.write(translated_document_text)
+
         with open(schema_path, "w", encoding="utf-8") as schema_file:
+            schema_payload = {
+                "schema_version": SCHEMA_TEMPLATE["schema_version"],
+                "document_id": document_id,
+                "original_text": text,
+                "translated_text_en": translated_document_text,
+                "translated_text_en_file": translated_markdown_file,
+                "segments": schema_segments
+            }
             json.dump(schema_payload, schema_file, ensure_ascii=False, indent=2)
 
         return {
             "schema_version": "1.0.0",
             "original_text": text,
-            "translated_en_text": " ".join(translated_chunks),
+            "translated_en_text": translated_document_text,
             "segments": segments,
             "schema": schema_payload,
             "debug_execution_time_ms": execution_time_ms
