@@ -3,9 +3,11 @@ import os
 import re
 import json
 import uuid
+import logging
 from markdown import markdown
 from bs4 import BeautifulSoup
 from typing import Dict, Any, List
+from dotenv import load_dotenv
 import spacy
 import fasttext
 import translation_service
@@ -19,11 +21,27 @@ SCHEMA_TEMPLATE = {
     "segments": []
 }
 
-_TRANSLATION_RESOURCES = translation_service.get_translation_resources("de")
+load_dotenv()
+
+LOG_LEVEL = os.getenv("SPLITTER_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+DEFAULT_MODEL_PATH = os.getenv("SPLITTER_MODEL_PATH", "lid.176.ftz")
+DEFAULT_FASTTEXT_MIN_CONFIDENCE = float(
+    os.getenv("SPLITTER_FASTTEXT_MIN_CONFIDENCE", "0.20")
+)
+DEFAULT_SOURCE_LANG = os.getenv("SPLITTER_SOURCE_LANG", "de")
+MOUNTED_FOLDER = os.getenv("MOUNTED_FOLDER", "translated_data")
 
 def markdown_to_text(md_text: str) -> str:
     if not md_text:
+        logger.debug("markdown_to_text called with empty text")
         return md_text
+    logger.debug("markdown_to_text converting markdown to text")
     html = markdown(md_text)
     text = BeautifulSoup(html, "html.parser").get_text(separator="\n")
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -31,10 +49,22 @@ def markdown_to_text(md_text: str) -> str:
     return text.strip()
 
 class MultilingualSplitter:
-    def __init__(self, model_path: str = "lid.176.ftz", fasttext_min_confidence: float = 0.20):
+    def __init__(
+        self,
+        model_path: str = DEFAULT_MODEL_PATH,
+        fasttext_min_confidence: float = DEFAULT_FASTTEXT_MIN_CONFIDENCE,
+        source_lang: str = DEFAULT_SOURCE_LANG,
+    ):
+        logger.info(
+            "Initializing MultilingualSplitter with model_path=%s, min_confidence=%.2f, source_lang=%s",
+            model_path,
+            fasttext_min_confidence,
+            source_lang,
+        )
         self.nlp = spacy.blank("de") 
         self.nlp.add_pipe("sentencizer")
         self.fasttext_min_confidence = fasttext_min_confidence
+        self.source_lang = source_lang
         
         self.german_signal_regex = re.compile(
             r'\b(der|die|das|und|ist|mit|von|für|dass|ein|eine|zum|zur|nicht|sind|werden|wurde|wird|auf|um|am|im|es|dem|den|des|zu|vor|nach|oder|wie)\b'
@@ -45,14 +75,18 @@ class MultilingualSplitter:
 
         if os.path.exists(model_path):
             self.lang_model = fasttext.load_model(model_path)
-            print(f"Loaded FastText language detection model from '{model_path}'")
+            logger.info("Loaded FastText language detection model from '%s'", model_path)
         else:
             self.lang_model = None
-            print(f"Warning: FastText model '{model_path}' not found. Language detection will rely on heuristics only.")
+            logger.warning(
+                "FastText model '%s' not found. Language detection will rely on heuristics only.",
+                model_path,
+            )
 
     def _detect_language(self, text: str) -> (str, str):
         cleaned_text = text.strip()
         if not cleaned_text:
+            logger.debug("_detect_language received empty text; defaulting to en")
             return "en", "regex"
         fasttext_confidence = None
         if self.lang_model:
@@ -61,6 +95,7 @@ class MultilingualSplitter:
             lang_tag = predictions[0][0].replace("__label__", "")
             fasttext_confidence = predictions[1][0] if predictions and predictions[1] else 0.0
             if lang_tag in ["en", "de"] and fasttext_confidence >= self.fasttext_min_confidence:
+                logger.debug("FastText detected language=%s confidence=%.4f", lang_tag, fasttext_confidence)
                 return lang_tag, f"fasttext/{fasttext_confidence:.4f}"
         confidence_note = "regex"
         if fasttext_confidence is not None:
@@ -69,22 +104,23 @@ class MultilingualSplitter:
 
     def translate_segments_to_en(self, de_segments: List[Dict[str, Any]]) -> List[str]:
         if not de_segments:
+            logger.info("No German segments to translate")
             return []
         texts = [seg["text"].strip() for seg in de_segments]
         total_words = sum(len(text.split()) for text in texts)
-        print(f"Total German segments: {len(texts)} | Total words: {total_words}")
+        logger.info("Total German segments: %s | Total words: %s", len(texts), total_words)
         if texts:
-            print(f"Sample DE segment: {texts[0][:160]}")
+            logger.debug("Sample DE segment: %s", texts[0][:160])
         translation_start = time.perf_counter()
-        translated = translation_service.translate_chunks(texts, "de")
+        translated = translation_service.translate_chunks(texts, self.source_lang)
         translation_duration = time.perf_counter() - translation_start
-        print(f"German segments translation completed in {translation_duration:.2f} seconds")
         if translated:
-            print(f"Sample EN translation: {translated[0][:160]}")
+            logger.debug("Sample EN translation: %s", translated[0][:160])
         return translated
 
     def process_document(self, text: str, document_id: str = "", schema_output_path: str = "", translate: bool = True) -> Dict[str, Any]:
         start_time = time.perf_counter()
+        logger.info("Processing document id=%s translate=%s", document_id or "<none>", translate)
         text = markdown_to_text(text)
         doc = self.nlp(text)
         
@@ -144,20 +180,26 @@ class MultilingualSplitter:
                 
         execution_time_ms = (time.perf_counter() - start_time) * 1000
         
+        mounted_root = os.path.join(os.path.dirname(__file__), MOUNTED_FOLDER)
+        os.makedirs(mounted_root, exist_ok=True)
+
         schema_path = schema_output_path
         if not schema_path:
             if document_id:
                 safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", document_id)
-                schema_path = os.path.join(os.path.dirname(__file__), f"schema_{safe_id}.json")
+                schema_path = os.path.join(mounted_root, f"schema_{safe_id}.json")
             else:
-                schema_path = os.path.join(os.path.dirname(__file__), "schema.json")
+                schema_path = os.path.join(mounted_root, "schema.json")
 
-        schema_dir = os.path.dirname(schema_path) or os.path.dirname(__file__)
+        schema_dir = os.path.dirname(schema_path) or mounted_root
         translated_markdown_file = f"{uuid.uuid4()}.md"
-        translated_markdown_path = os.path.join(schema_dir, translated_markdown_file)
+        translated_output_dir = os.path.join(schema_dir, MOUNTED_FOLDER)
+        os.makedirs(translated_output_dir, exist_ok=True)
+        translated_markdown_path = os.path.join(translated_output_dir, translated_markdown_file)
 
         with open(translated_markdown_path, "w", encoding="utf-8") as translated_file:
             translated_file.write(translated_document_text)
+        logger.info("Translated markdown written to %s", translated_markdown_path)
 
         with open(schema_path, "w", encoding="utf-8") as schema_file:
             schema_payload = {
@@ -169,6 +211,7 @@ class MultilingualSplitter:
                 "segments": schema_segments
             }
             json.dump(schema_payload, schema_file, ensure_ascii=False, indent=2)
+        logger.info("Schema written to %s", schema_path)
 
         return {
             "schema_version": "1.0.0",

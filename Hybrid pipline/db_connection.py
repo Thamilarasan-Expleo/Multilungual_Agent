@@ -24,9 +24,10 @@ CACHE_TABLE_NAME = os.getenv("CACHE_TABLE_NAME", "multilingual_cache")
 # Logger
 # ------------------------------------------------------------------
  
+LOG_LEVEL = os.getenv("DB_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 )
  
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------
  
 def get_db_connection():
+    logger.info("Opening database connection to %s:%s/%s", DB_HOST, DB_PORT, DB_NAME)
     return psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -71,7 +73,9 @@ def table_exists(schema_name: str, table_name: str) -> bool:
             (schema_name, table_name)
         )
  
-        return cur.fetchone()[0]
+        exists = cur.fetchone()[0]
+        logger.info("Table exists check for %s.%s: %s", schema_name, table_name, exists)
+        return exists
  
     finally:
         if cur:

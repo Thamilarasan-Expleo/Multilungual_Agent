@@ -1,7 +1,8 @@
 import json
 import math
+import os
 import re
-from dataclasses import dataclass
+import logging
 from typing import List, Tuple
 
 import numpy as np
@@ -10,12 +11,22 @@ from openpyxl import Workbook
 from databricks_api import OpenAI_Databricks_Embedding
 
 
+LOG_LEVEL = os.getenv("RETRIEVAL_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
 def load_text(file_path: str) -> str:
+    logger.info("Loading text from %s", file_path)
     with open(file_path, "r", encoding="utf-8") as file:
         return file.read()
 
 
 def load_translated_text_from_schema(schema_path: str) -> str:
+    logger.info("Loading translated text from schema %s", schema_path)
     with open(schema_path, "r", encoding="utf-8") as file:
         payload = json.load(file)
     translated = payload.get("translated_text_en", "")
@@ -30,6 +41,7 @@ def chunk_text(text: str, chunk_size: int, overlap: int) -> List[str]:
     if overlap < 0 or overlap >= chunk_size:
         raise ValueError("overlap must be >= 0 and < chunk_size")
 
+    logger.info("Chunking text with chunk_size=%s overlap=%s", chunk_size, overlap)
     chunks = []
     start = 0
     text_len = len(text)
@@ -72,6 +84,7 @@ def keyword_recall_at_3(keywords: List[str], chunks: List[str]) -> float:
 
 
 def embed_texts(embedding_model, texts: List[str]) -> np.ndarray:
+    logger.info("Embedding %s text(s)", len(texts))
     embeddings = embedding_model.get_text_embedding_batch(texts)
     return np.array(embeddings, dtype=np.float32)
 
@@ -80,6 +93,7 @@ def write_excel_report(
     output_path: str,
     rows: List[Tuple[str, List[str], List[float], float, float]],
 ) -> None:
+    logger.info("Writing Excel report to %s", output_path)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "retrieval_report"
@@ -117,10 +131,13 @@ def write_excel_report(
 
 
 def main() -> None:
-    corpus_path = "Hybrid pipline/schema_TEST_DATA.json"
-    chunk_size = 1024
-    overlap = 200
-    output_path = "Hybrid pipline/retrieval_report.xlsx"
+    mounted_folder = os.getenv("MOUNTED_FOLDER", "translated_data")
+    corpus_path = os.getenv("RETRIEVAL_CORPUS_PATH", "schema_TEST_DATA.json")
+    chunk_size = int(os.getenv("RETRIEVAL_CHUNK_SIZE", "1024"))
+    overlap = int(os.getenv("RETRIEVAL_CHUNK_OVERLAP", "200"))
+    output_path = os.getenv("RETRIEVAL_REPORT_PATH", "retrieval_report.xlsx")
+
+    logger.info("Retrieval evaluation starting")
 
     queries = [
         "Customer Service Representative needs to locate a customer using Kundennummer, Nachname and E-Mail-Adresse with fuzzy search enabled.",
@@ -145,11 +162,27 @@ def main() -> None:
         "Review of role-based access permissions for Kundendienstmitarbeiter, Compliance-Beauftragter and Systemadministrator.",
     ]
 
+    mounted_folder = os.path.abspath(mounted_folder)
+    os.makedirs(mounted_folder, exist_ok=True)
+
+    if not os.path.isabs(corpus_path):
+        corpus_path = os.path.join(mounted_folder, corpus_path)
+    if not os.path.isabs(output_path):
+        output_path = os.path.join(mounted_folder, output_path)
+
+    if not os.path.abspath(corpus_path).startswith(mounted_folder):
+        raise ValueError("RETRIEVAL_CORPUS_PATH must be inside MOUNTED_FOLDER")
+    if not os.path.abspath(output_path).startswith(mounted_folder):
+        raise ValueError("RETRIEVAL_REPORT_PATH must be inside MOUNTED_FOLDER")
+
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     if corpus_path.lower().endswith(".json"):
         text = load_translated_text_from_schema(corpus_path)
     else:
         text = load_text(corpus_path)
     chunks = chunk_text(text, chunk_size, overlap)
+    logger.info("Created %s chunks", len(chunks))
 
     embedding_wrapper = OpenAI_Databricks_Embedding()
     embedding_model = embedding_wrapper.as_llama_embedding()
@@ -184,15 +217,13 @@ def main() -> None:
         keyword_recalls.append(recall)
 
     write_excel_report(output_path, rows)
-
-    print("Retrieval Evaluation Report")
-    print("Model: Databricks text-embedding-3-large")
-    print(f"Chunks: {len(chunks)} | Chunk size: {chunk_size} | Overlap: {overlap}")
-    print(f"Queries: {len(queries)}")
-    print(f"Output: {output_path}")
-    print("-")
-    print(f"Average Top-3 Similarity: {float(np.mean(avg_scores)):.4f}")
-    print(f"Average Keyword Recall@3: {float(np.mean(keyword_recalls)):.4f}")
+    logger.info("Retrieval Evaluation Report")
+    logger.info("Model: Databricks text-embedding-3-large")
+    logger.info("Chunks: %s | Chunk size: %s | Overlap: %s", len(chunks), chunk_size, overlap)
+    logger.info("Queries: %s", len(queries))
+    logger.info("Output: %s", output_path)
+    logger.info("Average Top-3 Similarity: %.4f", float(np.mean(avg_scores)))
+    logger.info("Average Keyword Recall@3: %.4f", float(np.mean(keyword_recalls)))
 
 
 if __name__ == "__main__":
