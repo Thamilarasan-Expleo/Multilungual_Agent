@@ -40,7 +40,10 @@ def markdown_to_text(md_text: str) -> str:
     if not md_text:
         return md_text
     html = markdown(md_text)
-    return BeautifulSoup(html, "html.parser").get_text(separator=" ").strip()
+    text = BeautifulSoup(html, "html.parser").get_text(separator="\n")
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"[ \t]+", " ", text)
+    return text.strip()
  
  
 def get_translation_resources(source_lang):
