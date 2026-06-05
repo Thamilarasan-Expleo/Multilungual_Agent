@@ -184,10 +184,12 @@ def insert_translation_cache(records):
         cur.executemany(insert_query, values)
  
         conn.commit()
- 
+
         logger.info(
-            "%s records inserted successfully",
-            len(values)
+            "%s records inserted successfully into %s.%s",
+            len(values),
+            DB_SCHEMA,
+            CACHE_TABLE_NAME
         )
  
     except Exception as e:
@@ -203,6 +205,54 @@ def insert_translation_cache(records):
         if cur:
             cur.close()
  
+        if conn:
+            conn.close()
+
+# ------------------------------------------------------------------
+# Fetch Translation Cache
+# ------------------------------------------------------------------
+
+def fetch_translation_cache(original_texts):
+
+    if not original_texts:
+        logger.info("No texts provided for cache lookup")
+        return {}
+
+    create_cache_table_if_not_exists()
+
+    select_query = f"""
+        SELECT original_text, translated_text
+        FROM "{DB_SCHEMA}"."{CACHE_TABLE_NAME}"
+        WHERE original_text = ANY(%s)
+    """
+
+    conn = None
+    cur = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(select_query, (list(original_texts),))
+
+        rows = cur.fetchall()
+        logger.info(
+            "Cache lookup returned %s record(s) from %s.%s",
+            len(rows),
+            DB_SCHEMA,
+            CACHE_TABLE_NAME
+        )
+        return {row[0]: row[1] for row in rows}
+
+    except Exception as e:
+        logger.error("Cache lookup failed: %s", str(e))
+        raise
+
+    finally:
+
+        if cur:
+            cur.close()
+
         if conn:
             conn.close()
  

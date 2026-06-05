@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 import spacy
 import fasttext
 import translation_service
+from db_connection import fetch_translation_cache, insert_translation_cache
 
 SCHEMA_TEMPLATE = {
     "schema_version": "1.0",
@@ -112,11 +113,50 @@ class MultilingualSplitter:
         if texts:
             logger.debug("Sample DE segment: %s", texts[0][:160])
         translation_start = time.perf_counter()
-        translated = translation_service.translate_chunks(texts, self.source_lang)
+        translated = self.cache_translation(texts)
         translation_duration = time.perf_counter() - translation_start
         if translated:
             logger.debug("Sample EN translation: %s", translated[0][:160])
+        logger.info("Translation (with cache) completed in %.2f seconds", translation_duration)
         return translated
+
+    def cache_translation(self, texts: List[str]) -> List[str]:
+        if not texts:
+            return []
+
+        cache_hits = fetch_translation_cache(texts)
+        to_translate = [text for text in texts if text not in cache_hits]
+        logger.info(
+            "Cache matches: %s | Total segments: %s",
+            len(cache_hits),
+            len(texts)
+        )
+
+        if to_translate:
+            logger.info("Cache miss count: %s", len(to_translate))
+            translated_new = translation_service.translate_chunks(to_translate, self.source_lang)
+            if translated_new:
+                insert_translation_cache(
+                    [
+                        {
+                            "original_text": original,
+                            "translated_text": translated
+                        }
+                        for original, translated in zip(to_translate, translated_new)
+                    ]
+                )
+                logger.info("Stored %s translated segment(s) to cache", len(translated_new))
+            translation_map = {original: translated for original, translated in zip(to_translate, translated_new)}
+        else:
+            logger.info("Cache hit for all segments")
+            translation_map = {}
+
+        combined = {
+            **cache_hits,
+            **translation_map
+        }
+
+        return [combined.get(text, text) for text in texts]
 
     def process_document(self, text: str, document_id: str = "", schema_output_path: str = "", translate: bool = True) -> Dict[str, Any]:
         start_time = time.perf_counter()
@@ -191,10 +231,8 @@ class MultilingualSplitter:
             else:
                 schema_path = os.path.join(mounted_root, "schema.json")
 
-        schema_dir = os.path.dirname(schema_path) or mounted_root
+        translated_output_dir = os.path.dirname(schema_path) or mounted_root
         translated_markdown_file = f"{uuid.uuid4()}.md"
-        translated_output_dir = os.path.join(schema_dir, MOUNTED_FOLDER)
-        os.makedirs(translated_output_dir, exist_ok=True)
         translated_markdown_path = os.path.join(translated_output_dir, translated_markdown_file)
 
         with open(translated_markdown_path, "w", encoding="utf-8") as translated_file:

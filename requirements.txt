@@ -9,3 +9,4 @@ python-dotenv
 openpyxl
 markdown
 beautifulsoup4
+psycopg2
