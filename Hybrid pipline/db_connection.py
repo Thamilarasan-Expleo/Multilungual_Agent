@@ -24,9 +24,10 @@ CACHE_TABLE_NAME = os.getenv("CACHE_TABLE_NAME", "multilingual_cache")
 # Logger
 # ------------------------------------------------------------------
  
+LOG_LEVEL = os.getenv("DB_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s | %(levelname)s | %(message)s"
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s"
 )
  
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------------
  
 def get_db_connection():
+    logger.info("Opening database connection to %s:%s/%s", DB_HOST, DB_PORT, DB_NAME)
     return psycopg2.connect(
         host=DB_HOST,
         port=DB_PORT,
@@ -71,7 +73,9 @@ def table_exists(schema_name: str, table_name: str) -> bool:
             (schema_name, table_name)
         )
  
-        return cur.fetchone()[0]
+        exists = cur.fetchone()[0]
+        logger.info("Table exists check for %s.%s: %s", schema_name, table_name, exists)
+        return exists
  
     finally:
         if cur:
@@ -180,10 +184,12 @@ def insert_translation_cache(records):
         cur.executemany(insert_query, values)
  
         conn.commit()
- 
+
         logger.info(
-            "%s records inserted successfully",
-            len(values)
+            "%s records inserted successfully into %s.%s",
+            len(values),
+            DB_SCHEMA,
+            CACHE_TABLE_NAME
         )
  
     except Exception as e:
@@ -199,6 +205,54 @@ def insert_translation_cache(records):
         if cur:
             cur.close()
  
+        if conn:
+            conn.close()
+
+# ------------------------------------------------------------------
+# Fetch Translation Cache
+# ------------------------------------------------------------------
+
+def fetch_translation_cache(original_texts):
+
+    if not original_texts:
+        logger.info("No texts provided for cache lookup")
+        return {}
+
+    create_cache_table_if_not_exists()
+
+    select_query = f"""
+        SELECT original_text, translated_text
+        FROM "{DB_SCHEMA}"."{CACHE_TABLE_NAME}"
+        WHERE original_text = ANY(%s)
+    """
+
+    conn = None
+    cur = None
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute(select_query, (list(original_texts),))
+
+        rows = cur.fetchall()
+        logger.info(
+            "Cache lookup returned %s record(s) from %s.%s",
+            len(rows),
+            DB_SCHEMA,
+            CACHE_TABLE_NAME
+        )
+        return {row[0]: row[1] for row in rows}
+
+    except Exception as e:
+        logger.error("Cache lookup failed: %s", str(e))
+        raise
+
+    finally:
+
+        if cur:
+            cur.close()
+
         if conn:
             conn.close()
  

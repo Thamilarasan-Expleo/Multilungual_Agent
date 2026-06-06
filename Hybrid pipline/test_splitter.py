@@ -1,23 +1,42 @@
 import math
 import os
+import logging
 import openpyxl
+from dotenv import load_dotenv
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from splitter import MultilingualSplitter
 
+load_dotenv()
+
+MOUNTED_FOLDER = os.getenv("MOUNTED_FOLDER", "translated_data")
+os.makedirs(MOUNTED_FOLDER, exist_ok=True)
+
+LOG_LEVEL = os.getenv("SPLITTER_TEST_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 # CONFIGURABLE ACCURACY TUNING PARAMETER
 # Set this between 2.0 and 3.0 to expand your acceptable boundary tolerance window
-SIGMA_MULTIPLIER = 2.0  
+SIGMA_MULTIPLIER = float(os.getenv("SPLITTER_SIGMA_MULTIPLIER", "2.0"))  
 
-TEST_DATA_FILENAME = "mixed_de_en_segment_splitter_fixture_corpus.txt"
+TEST_DATA_FILENAME = os.getenv(
+    "SPLITTER_TEST_DATA_FILENAME",
+    "mixed_de_en_segment_splitter_fixture_corpus.txt",
+)
 
 def load_test_data_fixture():
-    data_path = os.path.join(os.path.dirname(__file__), TEST_DATA_FILENAME)
+    data_path = os.path.join(MOUNTED_FOLDER, TEST_DATA_FILENAME)
     if not os.path.exists(data_path):
+        logger.error("Test data fixture not found at %s", data_path)
         return None
     with open(data_path, "r", encoding="utf-8") as handle:
         data_text = handle.read().strip()
     if not data_text:
+        logger.error("Test data fixture is empty at %s", data_path)
         return None
     return {
         "id": "TEST_DATA",
@@ -45,11 +64,16 @@ def load_test_data_fixture():
 #     {"id": "US-16", "category": "Cloud Architecture Core", "text": "As a Lead Solutions Architect, I want clear infrastructure milestone definitions to guide the multi-region cluster migration strategy. Milestones Checklist: Let's review the final cloud product architecture delivery milestones before starting the production deployment. Das Projekt wurde pünktlich abgeschlossen und alle Abnahmekriterien wurden erfolgreich erfüllt! Are there any architectural questions or configuration bottlenecks remaining? Falls keine Einwände erhoben werden, wird das Deployment-Skript für die europäische Kernregion unverzüglich ausgeführt.", "description": "Tests text entries ending in complex mixed characters (!, ?, .)."}
 # ]
 
-test_fixtures = [load_test_data_fixture()]
+test_data_fixture = load_test_data_fixture()
+test_fixtures = [item for item in [test_data_fixture] if item]
+
+if not test_fixtures:
+    logger.error("No test fixtures available. Check MOUNTED_FOLDER and fixture file name.")
+    raise SystemExit(1)
 # if test_data_fixture:
 #     test_fixtures.append(test_data_fixture)
 
-print("Initializing Multilingual Range-Based Evaluation Framework...")
+logger.info("Initializing Multilingual Range-Based Evaluation Framework...")
 splitter = MultilingualSplitter()
 
 # -------------------------------------------------------------------------
@@ -60,7 +84,7 @@ char_per_segment_samples = []
 raw_base_data = []
 
 for item in test_fixtures:
-    schema_path = os.path.join(os.path.dirname(__file__), f"schema_{item['id']}.json")
+    schema_path = os.path.join(MOUNTED_FOLDER, f"schema_{item['id']}.json")
     res = splitter.process_document(item["text"], document_id=item["id"], schema_output_path=schema_path, translate=True)
     actual_count = len(res["segments"])
     char_count = len(item["text"])
@@ -77,10 +101,10 @@ mean_ratio = sum(char_per_segment_samples) / len(char_per_segment_samples)
 variance_sum = sum((x - mean_ratio) ** 2 for x in char_per_segment_samples)
 std_deviation = math.sqrt(variance_sum / len(char_per_segment_samples))
 
-print("\n--- Statistical Baseline Captured ---")
-print(f"Mean Character Density per Segment (mu): {mean_ratio:.2f}")
-print(f"Standard Deviation Vector Variation (sigma): {std_deviation:.2f}")
-print(f"Target Sigma Window Range Configured  : +- {SIGMA_MULTIPLIER} sigma\n")
+logger.info("--- Statistical Baseline Captured ---")
+logger.info("Mean Character Density per Segment (mu): %.2f", mean_ratio)
+logger.info("Standard Deviation Vector Variation (sigma): %.2f", std_deviation)
+logger.info("Target Sigma Window Range Configured  : +- %s sigma", SIGMA_MULTIPLIER)
 
 # -------------------------------------------------------------------------
 # PASS 2: Dynamic Sigma Range Boundaries Mapping & Evaluation
@@ -105,7 +129,15 @@ for idx, item in enumerate(test_fixtures):
     is_accurate = (min_expected <= actual_count <= max_expected)
     status = "PASSED" if is_accurate else "FAILED"
     
-    print(f"[{item['id']}] Chars: {char_count} | Allowed Range: {min_expected}-{max_expected} | Actual Segments: {actual_count} | {status}")
+    logger.info(
+        "[%s] Chars: %s | Allowed Range: %s-%s | Actual Segments: %s | %s",
+        item["id"],
+        char_count,
+        min_expected,
+        max_expected,
+        actual_count,
+        status,
+    )
     
     processed_results.append({
         "id": item["id"], "category": item["category"], "text": item["text"],
@@ -116,10 +148,18 @@ for idx, item in enumerate(test_fixtures):
     })
 
 # Run the 5000+ Word Performance Stress Matrix
-large_text = "The quick brown fox jumps over the lazy dog. »Dies ist ein deutscher Satz im Dokument.« " * 300
-stress_schema_path = os.path.join(os.path.dirname(__file__), "schema_STRESS_5000.json")
+stress_text = os.getenv(
+    "SPLITTER_STRESS_TEXT",
+    "The quick brown fox jumps over the lazy dog. »Dies ist ein deutscher Satz im Dokument.« ",
+)
+stress_multiplier = int(os.getenv("SPLITTER_STRESS_MULTIPLIER", "300"))
+large_text = stress_text * stress_multiplier
+stress_schema_path = os.path.join(MOUNTED_FOLDER, "schema_STRESS_5000.json")
 stress_res = splitter.process_document(large_text, document_id="STRESS_5000", schema_output_path=stress_schema_path, translate=False)
-print("stress test for 5000+ word document completed with latency: {:.3f} ms".format(stress_res["debug_execution_time_ms"]))
+logger.info(
+    "stress test for 5000+ word document completed with latency: %.3f ms",
+    stress_res["debug_execution_time_ms"],
+)
 # -------------------------------------------------------------------------
 # PASS 3: Generate the Spreadsheet
 # -------------------------------------------------------------------------
@@ -208,6 +248,7 @@ for ws in [ws_dash, ws_fixtures, ws_segments]:
         if col_letter in ['B', 'C'] and ws.title == "Sprint Dashboard": ws.column_dimensions[col_letter].width = 42
         else: ws.column_dimensions[col_letter].width = min(max(max_len + 4, 11), 60)
 
-wb.save("Hybrid_test_report.xlsx")
-print(f"\n>>> Profile processed successfully at {SIGMA_MULTIPLIER} Standard Deviations!")
-print("Spreadsheet updated: 'Hybrid_test_report.xlsx'")
+report_path = os.path.join(MOUNTED_FOLDER, os.getenv("SPLITTER_REPORT_PATH", "Hybrid_test_report.xlsx"))
+wb.save(report_path)
+logger.info("Profile processed successfully at %s Standard Deviations", SIGMA_MULTIPLIER)
+logger.info("Spreadsheet updated: %s", report_path)

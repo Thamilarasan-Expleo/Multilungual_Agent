@@ -1,9 +1,16 @@
+import os
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
+
 from transformers import MarianMTModel, MarianTokenizer
 import torch
 import time
 import re
+import logging
 from markdown import markdown
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
  
 # ==========================================
 # Text Cleaning Function
@@ -14,6 +21,7 @@ def clean_text(text: str) -> str:
     Removes all non-alphanumeric characters except basic punctuation and whitespace.
     Keeps: a-z, A-Z, 0-9, whitespace, basic punctuation (.,!?;:()-[]{}'"/@)
     """
+    logger.debug("Cleaning text for translation")
     # Remove all non-word characters except specified punctuation
     return re.sub(r'[^\w\s.,!?;:\-\[\]\{\}\'\"/@()]', '', text)
 
@@ -21,7 +29,17 @@ def clean_text(text: str) -> str:
 # Load Model
 # ==========================================
  
+load_dotenv()
+
+LOG_LEVEL = os.getenv("TRANSLATION_LOG_LEVEL", "INFO").upper()
+logging.basicConfig(
+    level=LOG_LEVEL,
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
+logger.info("Translation device selected: %s", device)
  
 # ==========================================
 # Language Mapping
@@ -30,15 +48,17 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
  
 LANG_MAPPING = {
     "en": None,
-    "de": "Helsinki-NLP/opus-mt-de-en",
+    "de": os.getenv("TRANSLATION_MODEL_DE", "Helsinki-NLP/opus-mt-de-en"),
 }
 
-DEFAULT_BATCH_SIZE = 8
+DEFAULT_BATCH_SIZE = int(os.getenv("TRANSLATION_BATCH_SIZE", "8"))
 MODEL_CACHE = {}
 
 def markdown_to_text(md_text: str) -> str:
     if not md_text:
+        logger.debug("markdown_to_text called with empty text")
         return md_text
+    logger.debug("markdown_to_text converting markdown to text")
     html = markdown(md_text)
     text = BeautifulSoup(html, "html.parser").get_text(separator="\n")
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -51,17 +71,24 @@ def get_translation_resources(source_lang):
     model_name = LANG_MAPPING.get(source_lang)
  
     if source_lang == "en":
+        logger.info("Source language is English; no translation resources required")
         return None, None
  
     if not model_name:
         raise ValueError(
             f"Unsupported language detected: {source_lang}"
         )
+
+    if os.getenv("TRANSLATION_MODEL_DE") and not os.path.exists(model_name):
+        logger.warning(
+            "TRANSLATION_MODEL_DE is set but path does not exist: %s",
+            model_name,
+        )
  
     if model_name not in MODEL_CACHE:
-        print(f"Loading translation model '{model_name}' on {device}...")
-        tokenizer = MarianTokenizer.from_pretrained(model_name)
-        model = MarianMTModel.from_pretrained(model_name)
+        logger.info("Loading translation model '%s' on %s...", model_name, device)
+        tokenizer = MarianTokenizer.from_pretrained(model_name, local_files_only=True)
+        model = MarianMTModel.from_pretrained(model_name, local_files_only=True)
         model = model.to(device)
         model.eval()
         MODEL_CACHE[model_name] = (
@@ -69,10 +96,10 @@ def get_translation_resources(source_lang):
             model
         )
         load_duration = time.perf_counter() - load_start
-        print(f"Translation model loaded in {load_duration:.2f} seconds")
+        logger.info("Translation model loaded in %.2f seconds", load_duration)
     else:
         load_duration = time.perf_counter() - load_start
-        print(f"Translation model cache hit in {load_duration:.4f} seconds")
+        logger.info("Translation model cache hit in %.4f seconds", load_duration)
  
     return MODEL_CACHE[model_name]
  
@@ -80,15 +107,15 @@ def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
     batch_start_time = time.perf_counter()
 
     total_words = sum(len(text.split()) for text in chunks)
-    print(f"Translating {len(chunks)} chunk(s) on {device} | Total words: {total_words}")
+    logger.info("Translating %s chunk(s) on %s | Total words: %s", len(chunks), device, total_words)
 
     if not chunks:
-        print("No chunks to translate")
+        logger.info("No chunks to translate")
         return []
  
     if source_lang == "en":
         batch_duration = time.perf_counter() - batch_start_time
-        print(f"Batch translation completed in {batch_duration:.2f} seconds")
+        logger.info("Batch translation completed in %.2f seconds", batch_duration)
         return chunks
  
     tokenizer, model = get_translation_resources(source_lang)
@@ -104,7 +131,7 @@ def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
             return_tensors="pt",
             truncation=True,
             padding=True,
-            max_length=512
+            max_length=int(os.getenv("TRANSLATION_MAX_LENGTH", "512"))
         )
 
         inputs = {
@@ -115,7 +142,7 @@ def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
         with torch.no_grad():
             translated_tokens = model.generate(
                 **inputs,
-                max_length=512
+                max_length=int(os.getenv("TRANSLATION_MAX_LENGTH", "512"))
             )
 
         translated_batch = tokenizer.batch_decode(
@@ -124,11 +151,10 @@ def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
         )
         translated_chunks.extend(translated_batch)
         batch_duration = time.perf_counter() - batch_start
-        print(f"Batch {batch_idx}/{total_batches} completed in {batch_duration:.2f} seconds")
+        logger.info("Batch %s/%s completed in %.2f seconds", batch_idx, total_batches, batch_duration)
  
     batch_duration = time.perf_counter() - batch_start_time
-    print(f"Batch translation completed in {batch_duration:.2f} seconds")
-    print(f"Translation service total time: {batch_duration:.2f} seconds")
+    logger.info("Translation service total time: %.2f seconds", batch_duration)
  
     return translated_chunks
  
@@ -136,7 +162,10 @@ def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
 # Split Large Documents
 # ==========================================
  
-def chunk_text(text, chunk_size=400):
+def chunk_text(text, chunk_size=None):
+
+    if chunk_size is None:
+        chunk_size = int(os.getenv("TRANSLATION_CHUNK_SIZE", "400"))
  
     words = text.split()
  
@@ -167,13 +196,13 @@ def translate_documents_to_english(texts):
  
     if not texts:
         total_duration = time.perf_counter() - documents_start_time
-        print(f"Batch document processing completed in {total_duration:.2f} seconds")
+        logger.info("Batch document processing completed in %.2f seconds", total_duration)
         return translated_documents
  
     texts = [clean_text(markdown_to_text(text)) for text in texts]
 
     source_lang = "de"
-    print(f"Using source language for all documents: {source_lang}")
+    logger.info("Using source language for all documents: %s", source_lang)
  
     language_groups = {
         source_lang: [
@@ -188,9 +217,10 @@ def translate_documents_to_english(texts):
     translated_documents = [None] * len(texts)
  
     for lang, grouped_items in language_groups.items():
-        print(
-            f"Processing {len(grouped_items)} document(s) "
-            f"for detected language: {lang}"
+        logger.info(
+            "Processing %s document(s) for detected language: %s",
+            len(grouped_items),
+            lang,
         )
  
         grouped_texts = [item["text"] for item in grouped_items]
@@ -208,7 +238,7 @@ def translate_documents_to_english(texts):
             translated_documents[item["original_index"]] = translated_text
  
     total_duration = time.perf_counter() - documents_start_time
-    print(f"Batch document processing completed in {total_duration:.2f} seconds")
+    logger.info("Batch document processing completed in %.2f seconds", total_duration)
  
     return translated_documents
  
@@ -234,12 +264,10 @@ if __name__ == "__main__":
         for segment in segments
         if segment.get("language") == "de"
     ]
-    print("Original German Text:\n",german_text)
+    logger.info("Original German Text length: %s", len(german_text))
     
     result = translate_documents_to_english(german_text)
 
-    print("\nTranslated Output:\n")
-    print("length of Translated Output:", len(result))
-    print(result)
+    logger.info("Translated Output length: %s", len(result))
  
  
