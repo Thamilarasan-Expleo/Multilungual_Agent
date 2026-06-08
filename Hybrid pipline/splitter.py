@@ -120,6 +120,102 @@ class MultilingualSplitter:
         logger.info("Translation (with cache) completed in %.2f seconds", translation_duration)
         return translated
 
+    def _reconstruct_translated_text(
+        self,
+        original_text: str,
+        segments: List[Dict[str, Any]],
+        translated_chunks: List[str],
+    ) -> str:
+        if not original_text:
+            return ""
+        if not segments:
+            return original_text
+        output_parts = []
+        cursor = 0
+        for seg, translated in zip(segments, translated_chunks):
+            start_char = seg["start_char"]
+            end_char = seg["end_char"]
+            if cursor < start_char:
+                output_parts.append(original_text[cursor:start_char])
+            output_parts.append(translated.strip())
+            cursor = end_char
+        if cursor < len(original_text):
+            output_parts.append(original_text[cursor:])
+        return "".join(output_parts)
+
+    def build_vectorization_payload(
+        self,
+        text: str,
+        document_id: str = "",
+        translate: bool = True,
+    ) -> Dict[str, Any]:
+        start_time = time.perf_counter()
+        logger.info("Building vectorization payload id=%s translate=%s", document_id or "<none>", translate)
+        text = markdown_to_text(text)
+        doc = self.nlp(text)
+
+        segments = []
+        for idx, sent in enumerate(doc.sents):
+            sent_text = sent.text.strip()
+            if not sent_text:
+                continue
+            segment_lang, confidence = self._detect_language(sent_text)
+            segments.append({
+                "segment_id": idx,
+                "text": sent.text,
+                "lang": segment_lang,
+                "lang_confidence": confidence,
+                "start_char": sent.start_char,
+                "end_char": sent.end_char,
+            })
+
+        translated_chunks = []
+        if translate:
+            de_segments = [seg for seg in segments if seg["lang"] == "de"]
+            translated_de_chunks = self.translate_segments_to_en(de_segments)
+            translated_de_idx = 0
+            for seg in segments:
+                if seg["lang"] == "de":
+                    translated_text = translated_de_chunks[translated_de_idx]
+                    seg["translated_text_en"] = translated_text
+                    translated_chunks.append(translated_text)
+                    translated_de_idx += 1
+                else:
+                    translated_text = seg["text"].strip()
+                    seg["translated_text_en"] = translated_text
+                    translated_chunks.append(translated_text)
+        else:
+            for seg in segments:
+                translated_text = seg["text"].strip()
+                seg["translated_text_en"] = translated_text
+                translated_chunks.append(translated_text)
+
+        translated_document_text = self._reconstruct_translated_text(text, segments, translated_chunks)
+
+        language_map = [
+            {
+                "segment_id": seg["segment_id"],
+                "language": seg["lang"],
+                "lang_confidence": seg["lang_confidence"],
+                "start_char": seg["start_char"],
+                "end_char": seg["end_char"],
+                "translated_text_en": seg["translated_text_en"],
+            }
+            for seg in segments
+        ]
+
+        execution_time_ms = (time.perf_counter() - start_time) * 1000
+
+        return {
+            "schema_version": "1.0.0",
+            "document_id": document_id,
+            "original_text": text,
+            "translated_text_en": translated_document_text,
+            "language_map": language_map,
+            "segments": segments,
+            "debug_execution_time_ms": execution_time_ms,
+        }
+
     def cache_translation(self, texts: List[str]) -> List[str]:
         if not texts:
             return []
@@ -183,7 +279,6 @@ class MultilingualSplitter:
             de_segments = [seg for seg in segments if seg["lang"] == "de"]
             translated_de_chunks = self.translate_segments_to_en(de_segments)
             translated_de_idx = 0
-
             translated_chunks = []
             for seg in segments:
                 if seg["lang"] == "de":
@@ -202,9 +297,7 @@ class MultilingualSplitter:
                 translated_chunks.append(translated_text)
                 seg["translated_text_en"] = translated_text
 
-        translated_document_text = "\n\n".join(
-            chunk.strip() for chunk in translated_chunks if chunk.strip()
-        )
+        translated_document_text = self._reconstruct_translated_text(text, segments, translated_chunks)
 
         schema_segments = [
             {
@@ -257,5 +350,99 @@ class MultilingualSplitter:
             "translated_en_text": translated_document_text,
             "segments": segments,
             "schema": schema_payload,
-            "debug_execution_time_ms": execution_time_ms
+            "debug_execution_time_ms": execution_time_ms,
+            "translated_markdown_path": translated_markdown_path,
+            "schema_path": schema_path,
         }
+
+    def process_text(
+        self,
+        text: str,
+        document_id: str = "",
+        schema_output_path: str = "",
+        translate: bool = True,
+    ) -> Dict[str, Any]:
+        vector_payload = self.build_vectorization_payload(
+            text,
+            document_id=document_id,
+            translate=translate,
+        )
+        return {
+            "translated_text_en": vector_payload.get("translated_text_en", ""),
+        }
+
+    def process_markdown_file(
+        self,
+        markdown_path: str,
+        document_id: str = "",
+        schema_output_path: str = "",
+        translate: bool = True,
+    ) -> Dict[str, Any]:
+        if not os.path.exists(markdown_path):
+            raise FileNotFoundError(f"Markdown file not found: {markdown_path}")
+        with open(markdown_path, "r", encoding="utf-8") as handle:
+            raw_text = handle.read()
+        if not document_id:
+            document_id = os.path.splitext(os.path.basename(markdown_path))[0]
+        result = self.process_document(
+            raw_text,
+            document_id=document_id,
+            schema_output_path=schema_output_path,
+            translate=translate,
+        )
+        vector_payload = self.build_vectorization_payload(
+            raw_text,
+            document_id=document_id,
+            translate=translate,
+        )
+        vector_payload["translated_text_en_file"] = result.get("translated_markdown_path")
+        return {
+            "translated_markdown_path": result.get("translated_markdown_path"),
+            "schema_path": result.get("schema_path"),
+            "schema": result.get("schema"),
+            "document_id": document_id,
+            "debug_execution_time_ms": result.get("debug_execution_time_ms"),
+            "vectorization_payload": vector_payload,
+        }
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        raise SystemExit("Usage: python splitter.py <path-to-markdown>")
+
+    markdown_path = sys.argv[1]
+    splitter = MultilingualSplitter()
+    result = splitter.process_markdown_file(markdown_path)
+    print(f"result keys: {list(result.keys())}")
+    payload_keys = sorted(result.get("vectorization_payload", {}).keys())
+    print(json.dumps(payload_keys, ensure_ascii=False, indent=2))
+
+
+    mixed_text_lines = [
+        "System status: OK.",
+        "Das System verarbeitet eingehende Anfragen.",
+        "User clicked submit and the form validated.",
+        "Bitte pruefen Sie die Eingabewerte.",
+        "The pipeline starts with preprocessing.",
+        "Die Verarbeitung wurde erfolgreich abgeschlossen.",
+        "Cache hit for segment index 12.",
+        "Die Verbindung wurde getrennt.",
+        "A fallback route was activated.",
+        "Der Benutzer erhielt eine Warnung.",
+        "Metrics are recorded every minute.",
+        "Fehler beim Laden der Konfiguration.",
+        "Retrying the request with backoff.",
+        "Die Anfrage ist ungueltig.",
+        "The system writes a new schema.",
+        "Uebersetzung gestartet.",
+        "Payload ready for vectorization.",
+        "Die Sitzung wurde beendet.",
+        "Monitoring reports no anomalies.",
+        "Bitte erneut versuchen.",
+    ]
+    mixed_text = "\n".join(mixed_text_lines)
+    text_result = splitter.process_text(mixed_text, document_id="CHECKPOINT_TEXT")
+    print("Translated text preview:")
+    print(text_result)
