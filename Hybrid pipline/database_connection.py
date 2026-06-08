@@ -230,8 +230,8 @@ def get_cached_translation(text: str) -> str:
 
         if result:
             return result[0]   # translated_text
-        else:
-            return text        # fallback
+        
+        return None     # fallback
 
     except Exception as e:
         logger.error(f"Cache lookup failed: {str(e)}")
