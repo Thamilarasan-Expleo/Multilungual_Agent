@@ -102,6 +102,13 @@ def get_translation_resources(source_lang):
         logger.info("Translation model cache hit in %.4f seconds", load_duration)
  
     return MODEL_CACHE[model_name]
+
+
+def preload_translation_models(source_langs=None):
+    """Warm translation models during service startup to avoid first-request latency."""
+    source_langs = source_langs or [lang for lang, model_name in LANG_MAPPING.items() if model_name]
+    for source_lang in source_langs:
+        get_translation_resources(source_lang)
  
 def translate_chunks(chunks, source_lang, batch_size=DEFAULT_BATCH_SIZE):
     batch_start_time = time.perf_counter()

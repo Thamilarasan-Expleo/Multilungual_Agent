@@ -110,7 +110,7 @@ raw_base_data = []
 
 for item in test_fixtures:
     schema_path = os.path.join(MOUNTED_FOLDER, f"schema_{item['id']}.json")
-    res = splitter.process_document(item["text"], document_id=item["id"], schema_output_path=schema_path, translate=True)
+    res = splitter.process_document(item["text"], document_id=item["id"], schema_output_path=schema_path, translate=False)
     actual_count = len(res["segments"])
     char_count = len(item["text"])
     
