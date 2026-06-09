@@ -5,7 +5,7 @@ import openpyxl
 from dotenv import load_dotenv
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-from splitter import MultilingualSplitter
+from splitter import MultilingualSplitter, markdown_to_text
 
 load_dotenv()
 
@@ -75,6 +75,31 @@ if not test_fixtures:
 
 logger.info("Initializing Multilingual Range-Based Evaluation Framework...")
 splitter = MultilingualSplitter()
+
+# -------------------------------------------------------------------------
+# TASK 343: Selective DE->EN Translation Agent (Integration Checks)
+# -------------------------------------------------------------------------
+payload_fixture = test_fixtures[0]
+payload_result = splitter.build_vectorization_payload(payload_fixture["text"], document_id=payload_fixture["id"], translate=True)
+logger.info(
+    "vectorization payload generated id=%s | segments=%s | latency=%.3f ms",
+    payload_result.get("document_id"),
+    len(payload_result.get("segments", [])),
+    payload_result.get("debug_execution_time_ms", 0.0),
+)
+if payload_result["original_text"] != markdown_to_text(payload_fixture["text"]):
+    raise AssertionError("Payload original_text mismatch after normalization")
+language_map = payload_result.get("language_map", [])
+if len(language_map) != len(payload_result.get("segments", [])):
+    raise AssertionError("Language map length mismatch")
+for idx, seg in enumerate(payload_result.get("segments", [])):
+    if language_map[idx]["start_char"] != seg["start_char"] or language_map[idx]["end_char"] != seg["end_char"]:
+        raise AssertionError("Language map positions do not match segment positions")
+for seg in payload_result.get("segments", []):
+    if seg["lang"] != "de" and seg["translated_text_en"].strip() != seg["text"].strip():
+        raise AssertionError("Non-DE segments should pass through unchanged")
+if not payload_result.get("translated_text_en"):
+    raise AssertionError("Translated EN text missing from payload")
 
 # -------------------------------------------------------------------------
 # PASS 1: Statistical Profiling Phase
