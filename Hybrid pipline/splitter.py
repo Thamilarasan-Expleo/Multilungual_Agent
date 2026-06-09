@@ -16,7 +16,6 @@ from db_connection import fetch_translation_cache, insert_translation_cache
 
 SCHEMA_TEMPLATE = {
     "schema_version": "1.0",
-    "document_id": "",
     "original_text": "",
     "translated_text_en": "",
     "translated_text_en_file": "",
@@ -225,7 +224,6 @@ class MultilingualSplitter:
     def _build_processing_bundle(
         self,
         text: str,
-        document_id: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
         start_time = time.perf_counter()
@@ -253,7 +251,6 @@ class MultilingualSplitter:
         execution_time_ms = (time.perf_counter() - start_time) * 1000
 
         return {
-            "document_id": document_id,
             "original_text": normalized_text,
             "segments": segments,
             "translated_chunks": translated_chunks,
@@ -294,7 +291,7 @@ class MultilingualSplitter:
             },
         }
 
-    def _build_schema_payload(self, bundle: Dict[str, Any], document_id: str) -> Dict[str, Any]:
+    def _build_schema_payload(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
         schema_segments = [
             {
                 "segment_id": seg["segment_id"],
@@ -309,17 +306,15 @@ class MultilingualSplitter:
 
         return {
             "schema_version": SCHEMA_TEMPLATE["schema_version"],
-            "document_id": document_id,
             "original_text": bundle["original_text"],
             "translated_text_en": bundle["translated_text_en"],
             "translated_text_en_file": "",
             "segments": schema_segments,
         }
 
-    def _build_vector_payload(self, bundle: Dict[str, Any], document_id: str) -> Dict[str, Any]:
+    def _build_vector_payload(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
         return {
             "schema_version": "1.0.0",
-            "document_id": document_id,
             "original_text": bundle["original_text"],
             "translated_text_en": bundle["translated_text_en"],
             "language_map": bundle["language_map"],
@@ -388,47 +383,27 @@ class MultilingualSplitter:
     def build_vectorization_payload(
         self,
         text: str,
-        document_id: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
-        logger.info(
-            "Building vectorization payload id=%s translate=%s",
-            document_id or "<none>",
-            translate,
-        )
+        logger.info("Building vectorization payload translate=%s", translate)
 
-        bundle = self._build_processing_bundle(
-            text=text,
-            document_id=document_id,
-            translate=translate,
-        )
-        return self._build_vector_payload(bundle, document_id)
+        bundle = self._build_processing_bundle(text=text, translate=translate)
+        return self._build_vector_payload(bundle)
 
     def process_document(
         self,
         text: str,
-        document_id: str = "",
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
-        logger.info("Processing document id=%s translate=%s", document_id or "<none>", translate)
+        logger.info("Processing document translate=%s", translate)
 
-        bundle = self._build_processing_bundle(
-            text=text,
-            document_id=document_id,
-            translate=translate,
-        )
+        bundle = self._build_processing_bundle(text=text, translate=translate)
 
         mounted_root = os.path.join(os.path.dirname(__file__), MOUNTED_FOLDER)
         os.makedirs(mounted_root, exist_ok=True)
 
-        schema_path = schema_output_path
-        if not schema_path:
-            if document_id:
-                safe_id = re.sub(r"[^A-Za-z0-9_.-]", "_", document_id)
-                schema_path = os.path.join(mounted_root, f"schema_{safe_id}.json")
-            else:
-                schema_path = os.path.join(mounted_root, "schema.json")
+        schema_path = schema_output_path or os.path.join(mounted_root, "schema.json")
 
         translated_output_dir = os.path.dirname(schema_path) or mounted_root
         translated_markdown_file = f"{uuid.uuid4()}.md"
@@ -440,7 +415,7 @@ class MultilingualSplitter:
         #     translated_file.write(bundle["translated_text_en"])
         # logger.info("Translated markdown written to %s", translated_markdown_path)
 
-        schema_payload = self._build_schema_payload(bundle, document_id)
+        schema_payload = self._build_schema_payload(bundle)
 
         # The schema JSON file is no longer written because the ingest path now
         # consumes the in-memory payload directly.
@@ -462,15 +437,10 @@ class MultilingualSplitter:
     def process_text(
         self,
         text: str,
-        document_id: str = "",
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
-        bundle = self._build_processing_bundle(
-            text=text,
-            document_id=document_id,
-            translate=translate,
-        )
+        bundle = self._build_processing_bundle(text=text, translate=translate)
 
         summary = self._language_summary(bundle["segments"])
 
@@ -486,7 +456,6 @@ class MultilingualSplitter:
     def process_markdown_file(
         self,
         markdown_path: str,
-        document_id: str = "",
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
@@ -496,22 +465,14 @@ class MultilingualSplitter:
         with open(markdown_path, "r", encoding="utf-8") as handle:
             raw_text = handle.read()
 
-        if not document_id:
-            document_id = os.path.splitext(os.path.basename(markdown_path))[0]
-
-        bundle = self._build_processing_bundle(
-            text=raw_text,
-            document_id=document_id,
-            translate=translate,
-        )
-        schema_payload = self._build_schema_payload(bundle, document_id)
-        vector_payload = self._build_vector_payload(bundle, document_id)
+        bundle = self._build_processing_bundle(text=raw_text, translate=translate)
+        schema_payload = self._build_schema_payload(bundle)
+        vector_payload = self._build_vector_payload(bundle)
 
         return {
             "translated_markdown_path": "",
             "schema_path": "",
             "schema": schema_payload,
-            "document_id": document_id,
             "debug_execution_time_ms": bundle["debug_execution_time_ms"],
             "original_markdown_path": markdown_path,
             "vectorization_payload": vector_payload,
@@ -545,19 +506,18 @@ if __name__ == "__main__":
     ]
     mixed_text = "\n".join(mixed_text_lines)
     print("for language detection without translation (translate=False):")
-    text_result = splitter.process_text(mixed_text, document_id="CHECKPOINT_TEXT",translate=False)
+    text_result = splitter.process_text(mixed_text,translate=False)
     print("Translated text preview:")
     print(text_result)
     print("=" * 80)
     print("for language detection with translation (translate=True):")
-    text_result = splitter.process_text(mixed_text, document_id="CHECKPOINT_TEXT")
+    text_result = splitter.process_text(mixed_text)
     print("Translated text preview:")
     print(text_result)
     print("=" * 80)
     print("for building vectorization payload:")
     payload = splitter.build_vectorization_payload(
         text=mixed_text,
-        document_id="DOC001",
         translate=True
     )
     print("Vectorization payload keys:")
