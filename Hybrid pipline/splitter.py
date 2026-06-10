@@ -40,6 +40,14 @@ MOUNTED_FOLDER = os.getenv("MOUNTED_FOLDER", "translated_data")
 
 
 def markdown_to_text(md_text: str) -> str:
+    """Convert markdown text to plain text by extracting text from HTML.
+
+    Args:
+        md_text: The markdown text to convert.
+
+    Returns:
+        Plain text with markdown formatting removed, or the original text if empty.
+    """
     if not md_text:
         logger.debug("markdown_to_text called with empty text")
         return md_text
@@ -52,12 +60,21 @@ def markdown_to_text(md_text: str) -> str:
 
 
 class MultilingualSplitter:
+    """Multilingual document splitter that detects language, translates German to English, and builds processing payloads."""
+
     def __init__(
         self,
         model_path: str = DEFAULT_MODEL_PATH,
         fasttext_min_confidence: float = DEFAULT_FASTTEXT_MIN_CONFIDENCE,
         source_lang: str = DEFAULT_SOURCE_LANG,
     ):
+        """Initialize the MultilingualSplitter with language detection and translation configuration.
+
+        Args:
+            model_path: Path to the FastText language detection model file.
+            fasttext_min_confidence: Minimum confidence threshold for FastText language detection.
+            source_lang: Source language code for translation (default: 'de' for German).
+        """
         logger.info(
             "Initializing MultilingualSplitter with model_path=%s, min_confidence=%.2f, source_lang=%s",
             model_path,
@@ -93,7 +110,16 @@ class MultilingualSplitter:
         fasttext_min_confidence: float = DEFAULT_FASTTEXT_MIN_CONFIDENCE,
         source_lang: str = DEFAULT_SOURCE_LANG,
     ):
-        """Warm all translation resources during service startup."""
+        """Warm all translation resources during service startup.
+
+        Args:
+            model_path: Path to the FastText language detection model file.
+            fasttext_min_confidence: Minimum confidence threshold for FastText language detection.
+            source_lang: Source language code for translation.
+
+        Returns:
+            An initialized MultilingualSplitter instance with preloaded models.
+        """
         splitter = cls(
             model_path=model_path,
             fasttext_min_confidence=fasttext_min_confidence,
@@ -103,6 +129,14 @@ class MultilingualSplitter:
         return splitter
 
     def _detect_language(self, text: str) -> Tuple[str, str]:
+        """Detect the language of a text segment using FastText and regex heuristics.
+
+        Args:
+            text: The text segment to analyze.
+
+        Returns:
+            A tuple of (language_code, confidence_note) where language_code is 'de' or 'en'.
+        """
         cleaned_text = text.strip()
         if not cleaned_text:
             logger.debug("_detect_language received empty text; defaulting to en")
@@ -131,9 +165,25 @@ class MultilingualSplitter:
         ) if self.german_signal_regex.search(cleaned_text) else ("en", confidence_note)
 
     def _normalize_text(self, text: str) -> str:
+        """Normalize text by converting markdown to plain text.
+
+        Args:
+            text: The text to normalize.
+
+        Returns:
+            The normalized plain text.
+        """
         return markdown_to_text(text)
 
     def _split_into_segments(self, text: str) -> List[Dict[str, Any]]:
+        """Split normalized text into individual sentence segments with language detection.
+
+        Args:
+            text: The normalized text to split.
+
+        Returns:
+            A list of segment dictionaries containing text, language, and position info.
+        """
         doc = self.nlp(text)
         segments: List[Dict[str, Any]] = []
 
@@ -161,6 +211,15 @@ class MultilingualSplitter:
         segments: List[Dict[str, Any]],
         translate: bool,
     ) -> Tuple[List[str], List[Dict[str, Any]]]:
+        """Translate German segments to English if translation is enabled.
+
+        Args:
+            segments: List of segment dictionaries to process.
+            translate: Whether to perform translation.
+
+        Returns:
+            A tuple of (translated_chunks, updated_segments) with translations added.
+        """
         translated_chunks: List[str] = []
 
         if not segments:
@@ -198,6 +257,16 @@ class MultilingualSplitter:
         segments: List[Dict[str, Any]],
         translated_chunks: List[str],
     ) -> str:
+        """Reconstruct a translated document by replacing German segments with English translations.
+
+        Args:
+            original_text: The original normalized text.
+            segments: List of segment dictionaries with position info.
+            translated_chunks: List of translated text for each segment.
+
+        Returns:
+            The reconstructed document with translated segments.
+        """
         if not original_text:
             return ""
         if not segments:
@@ -226,6 +295,15 @@ class MultilingualSplitter:
         text: str,
         translate: bool = True,
     ) -> Dict[str, Any]:
+        """Build a processing bundle containing all text analysis and translation results.
+
+        Args:
+            text: The input text to process.
+            translate: Whether to perform German to English translation.
+
+        Returns:
+            A dictionary with original text, segments, translations, and metadata.
+        """
         start_time = time.perf_counter()
         normalized_text = self._normalize_text(text)
         segments = self._split_into_segments(normalized_text)
@@ -260,6 +338,14 @@ class MultilingualSplitter:
         }
 
     def _language_summary(self, segments: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate a summary of language distribution across segments.
+
+        Args:
+            segments: List of segment dictionaries with language info.
+
+        Returns:
+            A dictionary with language distribution, dominant language, and segment counts.
+        """
         de_count = sum(1 for seg in segments if seg.get("lang") == "de")
         en_count = sum(1 for seg in segments if seg.get("lang") == "en")
         total_count = len(segments)
@@ -292,6 +378,14 @@ class MultilingualSplitter:
         }
 
     def _build_schema_payload(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
+        """Build a schema-compliant payload from a processing bundle.
+
+        Args:
+            bundle: The processing bundle containing original text and segments.
+
+        Returns:
+            A schema-compliant dictionary for document storage.
+        """
         schema_segments = [
             {
                 "segment_id": seg["segment_id"],
@@ -313,6 +407,14 @@ class MultilingualSplitter:
         }
 
     def _build_vector_payload(self, bundle: Dict[str, Any]) -> Dict[str, Any]:
+        """Build a vectorization payload from a processing bundle.
+
+        Args:
+            bundle: The processing bundle containing all text analysis data.
+
+        Returns:
+            A dictionary with all necessary data for vectorization.
+        """
         return {
             "schema_version": "1.0.0",
             "original_text": bundle["original_text"],
@@ -323,6 +425,14 @@ class MultilingualSplitter:
         }
 
     def translate_segments_to_en(self, de_segments: List[Dict[str, Any]]) -> List[str]:
+        """Translate German text segments to English using caching.
+
+        Args:
+            de_segments: List of German segment dictionaries to translate.
+
+        Returns:
+            A list of translated English strings, or empty list if no segments.
+        """
         if not de_segments:
             logger.info("No German segments to translate")
             return []
@@ -343,6 +453,17 @@ class MultilingualSplitter:
         return translated
 
     def cache_translation(self, texts: List[str]) -> List[str]:
+        """Translate texts using cache or live translation service.
+
+        Checks the translation cache first, then falls back to live translation
+        for uncached segments. Results are cached for future use.
+
+        Args:
+            texts: List of German text strings to translate.
+
+        Returns:
+            A list of translated English strings corresponding to input texts.
+        """
         if not texts:
             return []
 
@@ -380,14 +501,50 @@ class MultilingualSplitter:
 
         return [combined.get(text, text) for text in texts]
 
+    def contains_german(self, text: str, threshold: float = 0.3) -> bool:
+        """Check if German language is present in the input text using FastText model.
+
+        Args:
+            text: The input text to analyze.
+            threshold: Minimum confidence threshold for German detection (default: 0.3).
+
+        Returns:
+            True if German language is detected with confidence >= threshold, False otherwise.
+        """
+        if not text or not text.strip():
+            return False
+
+        if not self.lang_model:
+            return False
+
+        cleaned_text = text.replace("\n", " ").strip()
+        predictions = self.lang_model.predict(cleaned_text, k=1)
+        lang_tag = predictions[0][0].replace("__label__", "")
+        confidence = predictions[1][0] if predictions and predictions[1] else 0.0
+
+        return lang_tag == "de" and confidence >= threshold
+
     def build_vectorization_payload(
         self,
         text: str,
         translate: bool = True,
     ) -> Dict[str, Any]:
-        logger.info("Building vectorization payload translate=%s", translate)
+        """Build a vectorization payload for the given text.
 
-        bundle = self._build_processing_bundle(text=text, translate=translate)
+        Convenience method that processes text and returns a vectorization-ready payload.
+        Automatically disables translation if no German language is detected.
+
+        Args:
+            text: The input text to process.
+            translate: Whether to perform German to English translation (auto-disabled if no German detected).
+
+        Returns:
+            A vectorization payload dictionary.
+        """
+        actual_translate = translate and self.contains_german(text, threshold=0.3)
+        logger.info("Building vectorization payload translate=%s (auto-detected: %s)", translate, actual_translate)
+
+        bundle = self._build_processing_bundle(text=text, translate=actual_translate)
         return self._build_vector_payload(bundle)
 
     def process_document(
@@ -396,9 +553,22 @@ class MultilingualSplitter:
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
-        logger.info("Processing document translate=%s", translate)
+        """Process a document and return structured results with schema and payload.
 
-        bundle = self._build_processing_bundle(text=text, translate=translate)
+        Automatically disables translation if no German language is detected.
+
+        Args:
+            text: The input text to process.
+            schema_output_path: Optional path for schema output (currently unused).
+            translate: Whether to perform German to English translation (auto-disabled if no German detected).
+
+        Returns:
+            A dictionary with translated text, segments, schema, and metadata.
+        """
+        actual_translate = translate and self.contains_german(text, threshold=0.3)
+        logger.info("Processing document translate=%s (auto-detected: %s)", translate, actual_translate)
+
+        bundle = self._build_processing_bundle(text=text, translate=actual_translate)
 
         mounted_root = os.path.join(os.path.dirname(__file__), MOUNTED_FOLDER)
         os.makedirs(mounted_root, exist_ok=True)
@@ -440,7 +610,20 @@ class MultilingualSplitter:
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
-        bundle = self._build_processing_bundle(text=text, translate=translate)
+        """Process text and return translation results with language analysis.
+
+        Automatically disables translation if no German language is detected.
+
+        Args:
+            text: The input text to process.
+            schema_output_path: Optional path for schema output (currently unused).
+            translate: Whether to perform German to English translation (auto-disabled if no German detected).
+
+        Returns:
+            A dictionary with translated text, language distribution, and segments.
+        """
+        actual_translate = translate and self.contains_german(text, threshold=0.3)
+        bundle = self._build_processing_bundle(text=text, translate=actual_translate)
 
         summary = self._language_summary(bundle["segments"])
 
@@ -459,6 +642,19 @@ class MultilingualSplitter:
         schema_output_path: str = "",
         translate: bool = True,
     ) -> Dict[str, Any]:
+        """Process a markdown file and return structured results.
+
+        Args:
+            markdown_path: Path to the markdown file to process.
+            schema_output_path: Optional path for schema output (currently unused).
+            translate: Whether to perform German to English translation.
+
+        Returns:
+            A dictionary with schema, vectorization payload, and metadata.
+
+        Raises:
+            FileNotFoundError: If the specified markdown file does not exist.
+        """
         if not os.path.exists(markdown_path):
             raise FileNotFoundError(f"Markdown file not found: {markdown_path}")
 
