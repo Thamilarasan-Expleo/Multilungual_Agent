@@ -12,7 +12,12 @@ from dotenv import load_dotenv
 import spacy
 import fasttext
 import translation_service
-
+from db_connection import (
+    fetch_translation_cache,
+    insert_translation_cache,
+    fetch_schema_by_version,
+    insert_schema,
+)
 load_dotenv()
 
 LOG_LEVEL = os.getenv("SPLITTER_LOG_LEVEL", "INFO").upper()
@@ -27,7 +32,6 @@ DEFAULT_SCHEMA_VERSION = os.getenv("DEFAULT_SCHEMA_VERSION", "1.0")
 
 def get_schema_template() -> dict:
     """Fetch schema template from database or return default."""
-    from db_connection import fetch_schema_by_version
     schema = fetch_schema_by_version(DEFAULT_SCHEMA_VERSION)
     if schema:
         return schema
@@ -148,7 +152,6 @@ class MultilingualSplitter:
         Returns:
             The schema dictionary if found, otherwise the default SCHEMA_TEMPLATE.
         """
-        from db_connection import fetch_schema_by_version
         schema_version = version or DEFAULT_SCHEMA_VERSION
         schema = fetch_schema_by_version(schema_version)
         if schema:
@@ -162,7 +165,6 @@ class MultilingualSplitter:
             version: The schema version identifier.
             schema: The schema dictionary to store.
         """
-        from db_connection import insert_schema
         insert_schema(version, schema)
 
     def _detect_language(self, text: str) -> Tuple[str, str]:
@@ -501,7 +503,6 @@ class MultilingualSplitter:
         Returns:
             A list of translated English strings corresponding to input texts.
         """
-        from db_connection import fetch_translation_cache, insert_translation_cache
 
         if not texts:
             return []
