@@ -1,10 +1,13 @@
-import os
-import uuid
 import json
 import logging
+import os
+import uuid
+from contextlib import contextmanager
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from dotenv import load_dotenv
 import psycopg2
+from psycopg2.extras import Json
 
 load_dotenv()
 
@@ -23,8 +26,15 @@ logging.basicConfig(
     level=LOG_LEVEL,
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
-
 logger = logging.getLogger(__name__)
+
+DEFAULT_SCHEMA: Dict[str, Any] = {
+    "schema_version": "1.0",
+    "original_text": "",
+    "translated_text_en": "",
+    "translated_text_en_file": "",
+    "segments": [],
+}
 
 
 def get_db_connection():
@@ -34,8 +44,49 @@ def get_db_connection():
         port=DB_PORT,
         database=DB_NAME,
         user=DB_USER,
-        password=DB_PASSWORD
+        password=DB_PASSWORD,
     )
+
+
+@contextmanager
+def db_cursor(commit: bool = False):
+    conn = None
+    cur = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        yield cur
+        if commit:
+            conn.commit()
+    except Exception:
+        if conn:
+            conn.rollback()
+        raise
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+
+
+def execute_query(
+    query: str,
+    params: Optional[Sequence[Any]] = None,
+    *,
+    fetchone: bool = False,
+    fetchall: bool = False,
+    commit: bool = False,
+):
+    with db_cursor(commit=commit) as cur:
+        cur.execute(query, params)
+
+        if fetchone:
+            return cur.fetchone()
+
+        if fetchall:
+            return cur.fetchall()
+
+        return None
 
 
 def table_exists(schema_name: str, table_name: str) -> bool:
@@ -45,48 +96,36 @@ def table_exists(schema_name: str, table_name: str) -> bool:
             SELECT 1
             FROM information_schema.tables
             WHERE table_schema = %s
-            AND table_name = %s
+              AND table_name = %s
         )
     """
 
-    conn = None
-    cur = None
+    result = execute_query(query, (schema_name, table_name), fetchone=True)
+    exists = bool(result[0]) if result else False
 
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
+    logger.info("Table exists check for %s.%s: %s", schema_name, table_name, exists)
+    return exists
 
-        cur.execute(
-            query,
-            (schema_name, table_name)
-        )
 
-        exists = cur.fetchone()[0]
-        logger.info("Table exists check for %s.%s: %s", schema_name, table_name, exists)
-        return exists
+def create_table_if_not_exists(table_name: str, create_table_query: str):
+    """Generic helper to create schema and table if the table does not already exist."""
+    if table_exists(DB_SCHEMA, table_name):
+        logger.info("Table already exists: %s.%s", DB_SCHEMA, table_name)
+        return
 
-    finally:
-        if cur:
-            cur.close()
+    create_schema_query = f'''
+        CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}";
+    '''
 
-        if conn:
-            conn.close()
+    with db_cursor(commit=True) as cur:
+        cur.execute(create_schema_query)
+        cur.execute(create_table_query)
+
+    logger.info("Created table: %s.%s", DB_SCHEMA, table_name)
 
 
 def create_schema_table_if_not_exists():
     """Create the translation_schema table if it does not exist."""
-    if table_exists(DB_SCHEMA, SCHEMA_TABLE_NAME):
-        logger.info(
-            "Table already exists: %s.%s",
-            DB_SCHEMA,
-            SCHEMA_TABLE_NAME
-        )
-        return
-
-    create_schema_query = f"""
-        CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}";
-    """
-
     create_table_query = f"""
         CREATE TABLE "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}" (
             uuid UUID PRIMARY KEY,
@@ -95,48 +134,79 @@ def create_schema_table_if_not_exists():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """
+    create_table_if_not_exists(SCHEMA_TABLE_NAME, create_table_query)
 
-    conn = None
-    cur = None
 
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
+def create_cache_table_if_not_exists():
+    """Create the translation cache table if it does not exist."""
+    create_table_query = f"""
+        CREATE TABLE "{DB_SCHEMA}"."{CACHE_TABLE_NAME}" (
+            uuid UUID PRIMARY KEY,
+            original_text TEXT NOT NULL,
+            translated_text TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+    """
+    create_table_if_not_exists(CACHE_TABLE_NAME, create_table_query)
 
-        cur.execute(create_schema_query)
-        cur.execute(create_table_query)
 
-        conn.commit()
+def initialize_database():
+    """Create all required tables and seed the default schema if needed."""
+    create_schema_table_if_not_exists()
+    create_cache_table_if_not_exists()
+    ensure_default_schema_exists()
 
-        logger.info(
-            "Created table: %s.%s",
-            DB_SCHEMA,
-            SCHEMA_TABLE_NAME
+
+def save_schema(version: str, schema_json: Dict[str, Any]):
+    """
+    Insert a schema definition into the translation_schema table.
+
+    This behaves like an append-only save, so each call stores a new row.
+    """
+    create_schema_table_if_not_exists()
+
+    insert_query = f"""
+        INSERT INTO "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
+        (
+            uuid,
+            version,
+            schema
         )
+        VALUES (%s, %s, %s)
+    """
 
-    except Exception as e:
-        if conn:
-            conn.rollback()
+    execute_query(
+        insert_query,
+        (str(uuid.uuid4()), version, Json(schema_json)),
+        commit=True,
+    )
 
-        logger.error(str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
+    logger.info("Schema version %s saved successfully", version)
 
 
-def fetch_schema_by_version(version: str) -> dict:
-    """Fetch schema details by version from the translation_schema table.
+def ensure_default_schema_exists():
+    """Ensure the translation_schema table has a default schema record."""
+    create_schema_table_if_not_exists()
 
-    Args:
-        version: The schema version to fetch.
+    check_query = f"""
+        SELECT COUNT(*)
+        FROM "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
+        WHERE version = %s
+    """
 
-    Returns:
-        The schema dictionary if found, otherwise an empty dict.
+    row = execute_query(check_query, ("1.0",), fetchone=True)
+    count = row[0] if row else 0
+
+    if count == 0:
+        save_schema("1.0", DEFAULT_SCHEMA)
+        logger.info("Default schema inserted into %s.%s", DB_SCHEMA, SCHEMA_TABLE_NAME)
+
+
+def fetch_schema_by_version(version: str) -> Dict[str, Any]:
+    """
+    Fetch schema details by version from the translation_schema table.
+
+    Returns the stored schema if found, otherwise a default schema template.
     """
     create_schema_table_if_not_exists()
 
@@ -148,177 +218,21 @@ def fetch_schema_by_version(version: str) -> dict:
         LIMIT 1
     """
 
-    conn = None
-    cur = None
-
     try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute(select_query, (version,))
-
-        row = cur.fetchone()
+        row = execute_query(select_query, (version,), fetchone=True)
         if row:
             logger.info("Schema found for version %s", version)
             return row[0]
-        logger.info("No schema found for version %s", version)
-        return {}
-
     except Exception as e:
         logger.error("Schema fetch failed: %s", str(e))
-        raise
 
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
+    default_schema = DEFAULT_SCHEMA.copy()
+    default_schema["schema_version"] = version
+    logger.info("Returning default schema for version %s", version)
+    return default_schema
 
 
-def insert_schema(version: str, schema_json: dict):
-    """Insert a schema definition into the translation_schema table.
-
-    Args:
-        version: The schema version identifier.
-        schema_json: The schema dictionary to store.
-    """
-    create_schema_table_if_not_exists()
-
-    insert_query = f"""
-        INSERT INTO "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
-        (uuid, version, schema)
-        VALUES (%s, %s, %s)
-    """
-
-    conn = None
-    cur = None
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute(insert_query, (str(uuid.uuid4()), version, json.dumps(schema_json)))
-
-        conn.commit()
-        logger.info("Schema version %s inserted successfully", version)
-
-    except Exception as e:
-        if conn:
-            conn.rollback()
-
-        logger.error(str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
-
-
-def update_schema(version: str, schema_json: dict):
-    """Update a schema definition in the translation_schema table.
-
-    Inserts a new version record. The table maintains history via created_at timestamp.
-
-    Args:
-        version: The schema version identifier to update.
-        schema_json: The schema dictionary to store.
-    """
-    create_schema_table_if_not_exists()
-
-    insert_query = f"""
-        INSERT INTO "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
-        (uuid, version, schema)
-        VALUES (%s, %s, %s)
-    """
-
-    conn = None
-    cur = None
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute(insert_query, (str(uuid.uuid4()), version, json.dumps(schema_json)))
-
-        conn.commit()
-        logger.info("Schema version %s updated successfully", version)
-
-    except Exception as e:
-        if conn:
-            conn.rollback()
-
-        logger.error(str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
-
-
-def create_cache_table_if_not_exists():
-    """Create the translation cache table if it does not exist."""
-    if table_exists(DB_SCHEMA, CACHE_TABLE_NAME):
-        logger.info(
-            "Table already exists: %s.%s",
-            DB_SCHEMA,
-            CACHE_TABLE_NAME
-        )
-        return
-
-    create_schema_query = f"""
-        CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}";
-    """
-
-    create_table_query = f"""
-        CREATE TABLE "{DB_SCHEMA}"."{CACHE_TABLE_NAME}" (
-            uuid UUID PRIMARY KEY,
-            original_text TEXT NOT NULL,
-            translated_text TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    """
-
-    conn = None
-    cur = None
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute(create_schema_query)
-        cur.execute(create_table_query)
-
-        conn.commit()
-
-        logger.info(
-            "Created table: %s.%s",
-            DB_SCHEMA,
-            CACHE_TABLE_NAME
-        )
-
-    except Exception as e:
-        if conn:
-            conn.rollback()
-
-        logger.error(str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
-
-
-def insert_translation_cache(records):
+def insert_translation_cache(records: List[Dict[str, str]]):
     """Insert translation cache records into the database."""
     if not records:
         logger.info("No records to insert")
@@ -340,46 +254,26 @@ def insert_translation_cache(records):
         (
             str(uuid.uuid4()),
             item["original_text"],
-            item["translated_text"]
+            item["translated_text"],
         )
         for item in records
     ]
 
-    conn = None
-    cur = None
-
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-
+    with db_cursor(commit=True) as cur:
         cur.executemany(insert_query, values)
 
-        conn.commit()
-
-        logger.info(
-            "%s records inserted successfully into %s.%s",
-            len(values),
-            DB_SCHEMA,
-            CACHE_TABLE_NAME
-        )
-
-    except Exception as e:
-        if conn:
-            conn.rollback()
-
-        logger.error(str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
+    logger.info(
+        "%s records inserted successfully into %s.%s",
+        len(values),
+        DB_SCHEMA,
+        CACHE_TABLE_NAME,
+    )
 
 
-def fetch_translation_cache(original_texts):
+def fetch_translation_cache(original_texts: Iterable[str]) -> Dict[str, str]:
     """Fetch translation cache records by original texts."""
+    original_texts = list(original_texts)
+
     if not original_texts:
         logger.info("No texts provided for cache lookup")
         return {}
@@ -392,52 +286,40 @@ def fetch_translation_cache(original_texts):
         WHERE original_text = ANY(%s)
     """
 
-    conn = None
-    cur = None
+    rows = execute_query(select_query, (original_texts,), fetchall=True)
 
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
+    logger.info(
+        "Cache lookup returned %s record(s) from %s.%s",
+        len(rows),
+        DB_SCHEMA,
+        CACHE_TABLE_NAME,
+    )
 
-        cur.execute(select_query, (list(original_texts),))
+    return {row[0]: row[1] for row in rows}
 
-        rows = cur.fetchall()
-        logger.info(
-            "Cache lookup returned %s record(s) from %s.%s",
-            len(rows),
-            DB_SCHEMA,
-            CACHE_TABLE_NAME
-        )
-        return {row[0]: row[1] for row in rows}
 
-    except Exception as e:
-        logger.error("Cache lookup failed: %s", str(e))
-        raise
-
-    finally:
-        if cur:
-            cur.close()
-
-        if conn:
-            conn.close()
+# Backward-compatible aliases
+insert_schema = save_schema
+update_schema = save_schema
 
 
 if __name__ == "__main__":
+    initialize_database()
+
     translation_data = [
         {
             "original_text": "Der Benutzer muss sich anmelden.",
-            "translated_text": "The user must log in."
+            "translated_text": "The user must log in.",
         },
         {
             "original_text": "Das System muss Berichte generieren.",
-            "translated_text": "The system must generate reports."
+            "translated_text": "The system must generate reports.",
         },
         {
             "original_text": "Alle Daten müssen verschlüsselt werden.",
-            "translated_text": "All data must be encrypted."
-        }
+            "translated_text": "All data must be encrypted.",
+        },
     ]
 
     insert_translation_cache(translation_data)
-
     print("Completed successfully.")
