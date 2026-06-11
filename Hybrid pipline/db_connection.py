@@ -1,25 +1,46 @@
-import json
 import logging
 import os
 import uuid
 from contextlib import contextmanager
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
-from dotenv import load_dotenv
 import psycopg2
-from psycopg2.extras import Json
+from dotenv import load_dotenv
+from psycopg2.extras import Json, RealDictCursor, execute_values
+from psycopg2.pool import SimpleConnectionPool
 
 load_dotenv()
 
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+# ---------------------------------------------------------------------
+# Environment validation
+# ---------------------------------------------------------------------
+REQUIRED_ENV_VARS = [
+    "DB_HOST",
+    "DB_PORT",
+    "DB_NAME",
+    "DB_USER",
+    "DB_PASSWORD",
+    "DB_SCHEMA",
+]
 
-DB_SCHEMA = os.getenv("DB_SCHEMA")
-CACHE_TABLE_NAME = os.getenv("CACHE_TABLE_NAME", "multilingual_cache")
-SCHEMA_TABLE_NAME = os.getenv("SCHEMA_TABLE_NAME", "translation_schema")
+missing_env_vars = [var for var in REQUIRED_ENV_VARS if not os.getenv(var)]
+if missing_env_vars:
+    raise ValueError(
+        f"Missing required environment variables: {', '.join(missing_env_vars)}"
+    )
+
+DB_HOST = os.getenv("DB_HOST", "").strip()
+DB_PORT = int(os.getenv("DB_PORT", "5432").strip())
+DB_NAME = os.getenv("DB_NAME", "").strip()
+DB_USER = os.getenv("DB_USER", "").strip()
+DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_SCHEMA = os.getenv("DB_SCHEMA", "").strip()
+
+CACHE_TABLE_NAME = os.getenv("CACHE_TABLE_NAME", "multilingual_cache").strip()
+SCHEMA_TABLE_NAME = os.getenv("SCHEMA_TABLE_NAME", "translation_schema").strip()
+
+DB_POOL_MINCONN = int(os.getenv("DB_POOL_MINCONN", "1"))
+DB_POOL_MAXCONN = int(os.getenv("DB_POOL_MAXCONN", "10"))
 
 LOG_LEVEL = os.getenv("DB_LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
@@ -36,10 +57,23 @@ DEFAULT_SCHEMA: Dict[str, Any] = {
     "segments": [],
 }
 
+_connection_pool: Optional[SimpleConnectionPool] = None
 
-def get_db_connection():
-    logger.info("Opening database connection to %s:%s/%s", DB_HOST, DB_PORT, DB_NAME)
-    return psycopg2.connect(
+
+# ---------------------------------------------------------------------
+# Connection management
+# ---------------------------------------------------------------------
+def _build_connection_pool() -> SimpleConnectionPool:
+    """Create the global PostgreSQL connection pool."""
+    logger.info(
+        "Creating database connection pool for %s:%s/%s",
+        DB_HOST,
+        DB_PORT,
+        DB_NAME,
+    )
+    return SimpleConnectionPool(
+        minconn=DB_POOL_MINCONN,
+        maxconn=DB_POOL_MAXCONN,
         host=DB_HOST,
         port=DB_PORT,
         database=DB_NAME,
@@ -48,13 +82,37 @@ def get_db_connection():
     )
 
 
+def get_connection_pool() -> SimpleConnectionPool:
+    """Return the singleton connection pool, creating it lazily if needed."""
+    global _connection_pool
+    if _connection_pool is None:
+        _connection_pool = _build_connection_pool()
+    return _connection_pool
+
+
+def get_db_connection():
+    """Backward-compatible helper to get a pooled connection."""
+    return get_connection_pool().getconn()
+
+
+def release_db_connection(conn) -> None:
+    """Return a pooled connection back to the pool."""
+    if conn is not None:
+        get_connection_pool().putconn(conn)
+
+
 @contextmanager
 def db_cursor(commit: bool = False):
+    """
+    Context manager that yields a database cursor from the connection pool.
+
+    The connection is always returned to the pool.
+    """
     conn = None
     cur = None
     try:
         conn = get_db_connection()
-        cur = conn.cursor()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
         yield cur
         if commit:
             conn.commit()
@@ -66,7 +124,7 @@ def db_cursor(commit: bool = False):
         if cur:
             cur.close()
         if conn:
-            conn.close()
+            release_db_connection(conn)
 
 
 def execute_query(
@@ -77,6 +135,7 @@ def execute_query(
     fetchall: bool = False,
     commit: bool = False,
 ):
+    """Execute a SQL query and optionally fetch one or many rows."""
     with db_cursor(commit=commit) as cur:
         cur.execute(query, params)
 
@@ -89,6 +148,9 @@ def execute_query(
         return None
 
 
+# ---------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------
 def table_exists(schema_name: str, table_name: str) -> bool:
     """Check if a table exists in the specified schema."""
     query = """
@@ -97,34 +159,76 @@ def table_exists(schema_name: str, table_name: str) -> bool:
             FROM information_schema.tables
             WHERE table_schema = %s
               AND table_name = %s
-        )
+        ) AS exists
     """
-
-    result = execute_query(query, (schema_name, table_name), fetchone=True)
-    exists = bool(result[0]) if result else False
-
+    row = execute_query(query, (schema_name, table_name), fetchone=True)
+    exists = bool(row["exists"]) if row else False
     logger.info("Table exists check for %s.%s: %s", schema_name, table_name, exists)
     return exists
 
 
-def create_table_if_not_exists(table_name: str, create_table_query: str):
-    """Generic helper to create schema and table if the table does not already exist."""
+def index_exists(schema_name: str, index_name: str) -> bool:
+    """Check if an index exists in the specified schema."""
+    query = """
+        SELECT EXISTS (
+            SELECT 1
+            FROM pg_indexes
+            WHERE schemaname = %s
+              AND indexname = %s
+        ) AS exists
+    """
+    row = execute_query(query, (schema_name, index_name), fetchone=True)
+    return bool(row["exists"]) if row else False
+
+
+def create_schema_if_not_exists() -> None:
+    """Create the configured schema if it does not already exist."""
+    query = f'CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}";'
+    execute_query(query, commit=True)
+    logger.info("Ensured schema exists: %s", DB_SCHEMA)
+
+
+def create_table_if_not_exists(table_name: str, create_table_query: str) -> None:
+    """Create a table only if it does not already exist."""
     if table_exists(DB_SCHEMA, table_name):
         logger.info("Table already exists: %s.%s", DB_SCHEMA, table_name)
         return
 
-    create_schema_query = f'''
-        CREATE SCHEMA IF NOT EXISTS "{DB_SCHEMA}";
-    '''
-
-    with db_cursor(commit=True) as cur:
-        cur.execute(create_schema_query)
-        cur.execute(create_table_query)
-
+    create_schema_if_not_exists()
+    execute_query(create_table_query, commit=True)
     logger.info("Created table: %s.%s", DB_SCHEMA, table_name)
 
 
-def create_schema_table_if_not_exists():
+def create_indexes_if_not_exists() -> None:
+    """Create performance indexes used by the application."""
+    schema_index_name = f"idx_{SCHEMA_TABLE_NAME}_version"
+    cache_index_name = f"idx_{CACHE_TABLE_NAME}_original_text"
+
+    if not index_exists(DB_SCHEMA, schema_index_name):
+        create_index_query = f"""
+            CREATE INDEX "{schema_index_name}"
+            ON "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}" (version);
+        """
+        execute_query(create_index_query, commit=True)
+        logger.info("Created index: %s.%s", DB_SCHEMA, schema_index_name)
+    else:
+        logger.info("Index already exists: %s.%s", DB_SCHEMA, schema_index_name)
+
+    if not index_exists(DB_SCHEMA, cache_index_name):
+        create_index_query = f"""
+            CREATE INDEX "{cache_index_name}"
+            ON "{DB_SCHEMA}"."{CACHE_TABLE_NAME}" (original_text);
+        """
+        execute_query(create_index_query, commit=True)
+        logger.info("Created index: %s.%s", DB_SCHEMA, cache_index_name)
+    else:
+        logger.info("Index already exists: %s.%s", DB_SCHEMA, cache_index_name)
+
+
+# ---------------------------------------------------------------------
+# Table creation and initialization
+# ---------------------------------------------------------------------
+def create_schema_table_if_not_exists() -> None:
     """Create the translation_schema table if it does not exist."""
     create_table_query = f"""
         CREATE TABLE "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}" (
@@ -137,7 +241,7 @@ def create_schema_table_if_not_exists():
     create_table_if_not_exists(SCHEMA_TABLE_NAME, create_table_query)
 
 
-def create_cache_table_if_not_exists():
+def create_cache_table_if_not_exists() -> None:
     """Create the translation cache table if it does not exist."""
     create_table_query = f"""
         CREATE TABLE "{DB_SCHEMA}"."{CACHE_TABLE_NAME}" (
@@ -150,21 +254,24 @@ def create_cache_table_if_not_exists():
     create_table_if_not_exists(CACHE_TABLE_NAME, create_table_query)
 
 
-def initialize_database():
-    """Create all required tables and seed the default schema if needed."""
+def initialize_database() -> None:
+    """Create all required tables, indexes, and seed the default schema if needed."""
+    create_schema_if_not_exists()
     create_schema_table_if_not_exists()
     create_cache_table_if_not_exists()
+    create_indexes_if_not_exists()
     ensure_default_schema_exists()
 
 
+# ---------------------------------------------------------------------
+# Schema operations
+# ---------------------------------------------------------------------
 def save_schema(version: str, schema_json: Dict[str, Any]):
     """
     Insert a schema definition into the translation_schema table.
 
-    This behaves like an append-only save, so each call stores a new row.
+    This is append-only and keeps schema history.
     """
-    create_schema_table_if_not_exists()
-
     insert_query = f"""
         INSERT INTO "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
         (
@@ -184,18 +291,15 @@ def save_schema(version: str, schema_json: Dict[str, Any]):
     logger.info("Schema version %s saved successfully", version)
 
 
-def ensure_default_schema_exists():
+def ensure_default_schema_exists() -> None:
     """Ensure the translation_schema table has a default schema record."""
-    create_schema_table_if_not_exists()
-
     check_query = f"""
-        SELECT COUNT(*)
+        SELECT COUNT(*) AS count
         FROM "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
         WHERE version = %s
     """
-
     row = execute_query(check_query, ("1.0",), fetchone=True)
-    count = row[0] if row else 0
+    count = row["count"] if row else 0
 
     if count == 0:
         save_schema("1.0", DEFAULT_SCHEMA)
@@ -206,10 +310,9 @@ def fetch_schema_by_version(version: str) -> Dict[str, Any]:
     """
     Fetch schema details by version from the translation_schema table.
 
-    Returns the stored schema if found, otherwise a default schema template.
+    Returns the latest stored schema if found. If not found, a default schema
+    template is returned and also persisted for future lookups.
     """
-    create_schema_table_if_not_exists()
-
     select_query = f"""
         SELECT schema
         FROM "{DB_SCHEMA}"."{SCHEMA_TABLE_NAME}"
@@ -222,23 +325,30 @@ def fetch_schema_by_version(version: str) -> Dict[str, Any]:
         row = execute_query(select_query, (version,), fetchone=True)
         if row:
             logger.info("Schema found for version %s", version)
-            return row[0]
-    except Exception as e:
-        logger.error("Schema fetch failed: %s", str(e))
+            return row["schema"]
+    except Exception as exc:
+        logger.exception("Schema fetch failed for version %s: %s", version, exc)
 
     default_schema = DEFAULT_SCHEMA.copy()
     default_schema["schema_version"] = version
-    logger.info("Returning default schema for version %s", version)
+
+    try:
+        save_schema(version, default_schema)
+        logger.info("Returning and saving default schema for version %s", version)
+    except Exception as exc:
+        logger.exception("Failed to save default schema for version %s: %s", version, exc)
+
     return default_schema
 
 
+# ---------------------------------------------------------------------
+# Cache operations
+# ---------------------------------------------------------------------
 def insert_translation_cache(records: List[Dict[str, str]]):
     """Insert translation cache records into the database."""
     if not records:
         logger.info("No records to insert")
         return
-
-    create_cache_table_if_not_exists()
 
     insert_query = f"""
         INSERT INTO "{DB_SCHEMA}"."{CACHE_TABLE_NAME}"
@@ -247,7 +357,7 @@ def insert_translation_cache(records: List[Dict[str, str]]):
             original_text,
             translated_text
         )
-        VALUES (%s, %s, %s)
+        VALUES %s
     """
 
     values = [
@@ -260,7 +370,7 @@ def insert_translation_cache(records: List[Dict[str, str]]):
     ]
 
     with db_cursor(commit=True) as cur:
-        cur.executemany(insert_query, values)
+        execute_values(cur, insert_query, values)
 
     logger.info(
         "%s records inserted successfully into %s.%s",
@@ -278,15 +388,13 @@ def fetch_translation_cache(original_texts: Iterable[str]) -> Dict[str, str]:
         logger.info("No texts provided for cache lookup")
         return {}
 
-    create_cache_table_if_not_exists()
-
     select_query = f"""
         SELECT original_text, translated_text
         FROM "{DB_SCHEMA}"."{CACHE_TABLE_NAME}"
         WHERE original_text = ANY(%s)
     """
 
-    rows = execute_query(select_query, (original_texts,), fetchall=True)
+    rows = execute_query(select_query, (original_texts,), fetchall=True) or []
 
     logger.info(
         "Cache lookup returned %s record(s) from %s.%s",
@@ -295,10 +403,12 @@ def fetch_translation_cache(original_texts: Iterable[str]) -> Dict[str, str]:
         CACHE_TABLE_NAME,
     )
 
-    return {row[0]: row[1] for row in rows}
+    return {row["original_text"]: row["translated_text"] for row in rows}
 
 
+# ---------------------------------------------------------------------
 # Backward-compatible aliases
+# ---------------------------------------------------------------------
 insert_schema = save_schema
 update_schema = save_schema
 
