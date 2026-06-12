@@ -12,16 +12,12 @@ from dotenv import load_dotenv
 import spacy
 import fasttext
 import translation_service
-from db_connection import fetch_translation_cache, insert_translation_cache
-
-SCHEMA_TEMPLATE = {
-    "schema_version": "1.0",
-    "original_text": "",
-    "translated_text_en": "",
-    "translated_text_en_file": "",
-    "segments": []
-}
-
+from db_connection import (
+    fetch_translation_cache,
+    insert_translation_cache,
+    fetch_schema_by_version,
+    save_schema,
+)
 load_dotenv()
 
 LOG_LEVEL = os.getenv("SPLITTER_LOG_LEVEL", "INFO").upper()
@@ -30,6 +26,16 @@ logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+DEFAULT_SCHEMA_VERSION = os.getenv("DEFAULT_SCHEMA_VERSION", "1.0")
+
+
+def get_schema_template() -> dict:
+    """Fetch schema template from database or return default."""
+    return fetch_schema_by_version(DEFAULT_SCHEMA_VERSION)
+
+
+SCHEMA_TEMPLATE = get_schema_template()
 
 DEFAULT_MODEL_PATH = os.getenv("SPLITTER_MODEL_PATH", "lid.176.ftz")
 DEFAULT_FASTTEXT_MIN_CONFIDENCE = float(
@@ -127,6 +133,27 @@ class MultilingualSplitter:
         )
         translation_service.preload_translation_models([source_lang])
         return splitter
+
+    def fetch_schema_details(self, version: str = None) -> dict:
+        """Fetch schema details from the database based on version.
+
+        Args:
+            version: The schema version to fetch. Defaults to DEFAULT_SCHEMA_VERSION.
+
+        Returns:
+            The schema dictionary if found, otherwise the default SCHEMA_TEMPLATE.
+        """
+        schema_version = version or DEFAULT_SCHEMA_VERSION
+        return fetch_schema_by_version(schema_version)
+
+    def store_schema(self, version: str, schema: dict):
+        """Store schema definition to the database.
+
+        Args:
+            version: The schema version identifier.
+            schema: The schema dictionary to store.
+        """
+        save_schema(version, schema)
 
     def _detect_language(self, text: str) -> Tuple[str, str]:
         """Detect the language of a text segment using FastText and regex heuristics.
@@ -464,6 +491,7 @@ class MultilingualSplitter:
         Returns:
             A list of translated English strings corresponding to input texts.
         """
+
         if not texts:
             return []
 
@@ -519,8 +547,14 @@ class MultilingualSplitter:
 
         cleaned_text = text.replace("\n", " ").strip()
         predictions = self.lang_model.predict(cleaned_text, k=1)
+
         lang_tag = predictions[0][0].replace("__label__", "")
         confidence = predictions[1][0] if predictions and predictions[1] else 0.0
+
+        logger.info(
+            f"Language detection result - Predicted Language: {lang_tag}, "
+            f"Confidence Score: {confidence:.4f}, Threshold: {threshold}"
+        )
 
         return lang_tag == "de" and confidence >= threshold
 
@@ -718,3 +752,56 @@ if __name__ == "__main__":
     )
     print("Vectorization payload keys:")
     print(list(payload.keys()))
+
+    mixed_text = '''As a Business User, I want the system to automatically release IMSH cash refunds for policies terminated or cancelled under certain PS Reason Codes, so that refunds are processed without requiring manual journal entries.
+ 
+        Derzeit gibt das System IMSH-Barerstattungen nur für bestimmte PS Reason Codes frei, die in der Tabelle T9132 konfiguriert sind.
+ 
+        Currently, IMSH cash refunds are allowed for the following reason codes:
+ 
+        * SOIP – Switch to another IP (via CPF)
+        * DLA / DLAC – Death of Life Assured
+        * CHPL – Change Plan Issuance
+ 
+        Für die folgenden Reason Codes ist keine automatische IMSH-Rückerstattung möglich:
+ 
+        * PS04 – Policyholder’s Request
+        * REQ – Client’s Request
+        * INEN – Ineligible due to nationality
+ 
+        Users currently perform a workaround by posting an LP RT transaction and raising a Life JV to process the refund manually.
+ 
+        Aktuell muss der Benutzer eine manuelle Journalbuchung erstellen, um die IMSH-Rückerstattung abzuschließen.
+ 
+        Termination – Manual Lapse (T514)
+ 
+        Existing Behavior:
+ 
+        * No CPF code check.
+        * IMSH refund allowed only for SOIP, DLA, DLAC, and CHPL.
+ 
+        Erwartetes Verhalten:
+ 
+        * Die neuen Reason Codes PS04, REQ und INEN sollen unterstützt werden.
+        * Eine Prüfung des CPF-Codes ist nicht erforderlich.
+ 
+        Expected Behavior:
+ 
+        * New Reason Codes PS04, REQ, and INEN must be added.
+        * CPF code validation is not required.
+ '''
+    print("for processing a longer mixed language document:")
+    text_result = splitter.contains_german(mixed_text)
+    print("language detection result for longer document:")
+    print(text_result)
+
+    # schema_to_store = {
+    # "schema_version": "1.0",
+    # "original_text": "",
+    # "translated_text_en": "",
+    # "translated_text_en_file": "",
+    # "segments": []
+    # }
+
+    # splitter.store_schema("1.0", schema_to_store)
+    # print("Schema stored successfully")
